@@ -14,7 +14,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # Every Vagrant virtual environment requires a box to build off of.
       hive.vm.box = "precise32"
       hive.vm.hostname = "hive"
-      hive.vm.network "private_network", ip: "192.168.2.200", virtualbox__intnet: "ucsb"    
+     # hive.vm.network "private_network", ip: "192.168.2.200", virtualbox__intnet: "ucsb"  
+      hive.vm.network "public_network", ip: "192.168.1.200", :bridge => 'Wireless Network Connection'	  
+	  hive.vm.network "forwarded_port", guest: 50070, host: 50070
+	  hive.vm.network "forwarded_port", guest: 50030, host: 50030
       hive.vm.provider :virtualbox do |vb|
         # Use VBoxManage to customize the VM. For example to change memory:
         vb.customize ["modifyvm", :id, "--memory", "2048"]
@@ -37,7 +40,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "riak" do |riak|
       riak.vm.box = "precise32"
       riak.vm.hostname = "riak"
-      riak.vm.network "private_network", ip: "192.168.2.201", virtualbox__intnet: "ucsb"
+      #riak.vm.network "private_network", ip: "192.168.2.201", virtualbox__intnet: "ucsb"
+	  riak.vm.network "public_network", ip: "192.168.1.201", :bridge => 'Wireless Network Connection'
+	  riak.vm.network "forwarded_port", guest: 80, host: 8080
       riak.vm.provider :virtualbox do |vb|
         # Use VBoxManage to customize the VM. For example to change memory:
         vb.customize ["modifyvm", :id, "--memory", "2048"]

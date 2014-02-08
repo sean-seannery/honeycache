@@ -1,0 +1,3 @@
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/vagrant/hadoop-1.2.1/bin:/home/vagrant/hive-0.12.0/bin"
+HADOOP_HOME="/home/vagrant/hadoop-1.2.1"
+HIVE_HOME="/home/vagrant/hive-0.12.0"
