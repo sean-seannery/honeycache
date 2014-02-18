@@ -1,23 +1,28 @@
 #---------------------------install Hadoop utilities------------------------------------------
 
+
 package "mysql-server" do
     action :install
 end
 
-service "mysql-server" do
+service "mysql" do
     action [:start, :enable]
 end
 
 ["hadoop","hduser"].each do |createme|
     user createme do
+        home "/home/#{createme}"
+        supports :manage_home => true
         action :create
+        #password "$6$jITd7aMT$kFkCmHN7SwYlwmLxTkjGR7TVvsvN9xdeifnoNcBdPSP4LIqyKYk3HLVVNOsYA/s5yYUDQ80Af5shvuJKRRiyi0"
+        shell "/bin/bash"
     end
 end
 
 group "hadoop" do
     action :create
     append true
-    members "hadoop, hduser, vagrant"
+    members ["hadoop", "hduser", "vagrant"]
 end
 
 #set up environment variables for all users
@@ -40,11 +45,8 @@ execute "unzip_hadoop" do
     creates "/home/hadoop/hadoop-1.2.1"
     user "hadoop"
     group "hadoop"
- end
- 
- execute "ln /home/vagrant/hadoop /home/hadoop/hadoop-1.2.1/" do
-    creates "/home/vagrant/hadoop"
- end
+end
+
 
 #update config files
 cookbook_file "/home/hadoop/hadoop-1.2.1/conf/hadoop-env.sh" do
@@ -103,21 +105,28 @@ execute "authorizeroot_key" do
     user "root"
 end 
 
+execute "add localhost to known_hosts" do
+  command "ssh-keyscan localhost >> /home/hadoop/.ssh/known_hosts"
+  user "hadoop"
+  not_if "grep -q \"`ssh-keyscan localhost`\" /home/hadoop/.ssh/known_hosts"
+end
+
 #format the node. creates /tmp/hadoop-root/dfs/name     run this only once or you lose all data
 execute "hadoop_format_namenode" do
   command "/home/hadoop/hadoop-1.2.1/bin/hadoop namenode -format"
-  creates "/tmp/hadoop-root/dfs/name/"
+  creates "/tmp/hadoop-hadoop/dfs/name/"
   user "hadoop"
 end
 
-#start all the services
-service "hadoop_services" do
-  supports :status => true, :restart => true
-  start_command "/home/vagrant/hadoop-1.2.1/bin/start-all.sh"
-  restart_command "/home/vagrant/hadoop-1.2.1/bin/stop-all.sh && sudo /home/vagrant/hadoop-1.2.1/bin/start-all.sh"
-  status_command 'jps | grep "JobTracker\|NameNode\|DataNode"'
-  action [ :start ]
+# start all the services
+execute "/home/hadoop/hadoop-1.2.1/bin/start-all.sh" do
+  not_if "jps | grep 'JobTracker\|NameNode\|DataNode\|TaskTracker'"
+  user "hadoop"
 end
+
+ execute "ln -s /home/hadoop/hadoop-1.2.1/ /home/vagrant/hadoop" do
+    creates "/home/vagrant/hadoop"
+ end
 
 #clean up
 execute "cleanup_hadoop" do
@@ -127,16 +136,26 @@ end
 
 #---------------  Install Hive ------------------------------------------------
 
-cookbook_file "/home/vagrant/hive-0.12.0.tar.gz" do
+cookbook_file "/home/hadoop/hive-0.12.0.tar.gz" do
     source "hive-0.12.0.tar.gz"
     mode "0664"
-    user "vagrant"
+    user "hadoop"
 end
 
 #unzip it
 execute "unzip_hive" do
-    command "cd /home/vagrant && tar -xvzf hive-0.12.0.tar.gz"
-    creates "/home/vagrant/hive-0.12.0"
-    user "vagrant"
+    command "cd /home/hadoop && tar -xvzf hive-0.12.0.tar.gz"
+    creates "/home/hadoop/hive-0.12.0"
+    user "hadoop"
  end
+
+execute "ln -s /home/hadoop/hive-0.12.0/ /home/vagrant/hive" do
+    creates "/home/vagrant/hive"
+ end
+ 
+ #clean up
+execute "cleanup_hive" do
+    command "mv /home/hadoop/hive-0.12.0.tar.gz /home/hadoop/hive-0.12.0/" 
+    creates "/home/hadoop/hive-0.12.0/hive-0.12.0.tar.gz"
+end
  

@@ -7,6 +7,15 @@ execute "sudo apt-get update"
     end
 end
 
-execute "sudo /usr/sbin/sshd"
+service "sshd" do 
+    action [:start]
+end
 
 execute "sudo ufw disable"
+
+# execute "sudo gem install ruby-shadow" do 
+    # creates "/root/.ssh/id_dsa"
+    # not_if 'gem list | grep ruby-shadow'
+    # user "vagrant"
+# end 
+

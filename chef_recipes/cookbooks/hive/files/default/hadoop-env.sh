@@ -6,7 +6,7 @@
 # remote nodes.
 
 # The java implementation to use.  Required.
- export JAVA_HOME=/usr/lib/jvm/java-1.7.0-openjdk-i386
+ export JAVA_HOME=/usr/lib/jvm/java-1.6.0-openjdk-i386
 
 # Extra Java CLASSPATH elements.  Optional.
 # export HADOOP_CLASSPATH=
@@ -31,7 +31,7 @@ export HADOOP_JOBTRACKER_OPTS="-Dcom.sun.management.jmxremote $HADOOP_JOBTRACKER
 # export HADOOP_SSH_OPTS="-o ConnectTimeout=1 -o SendEnv=HADOOP_CONF_DIR"
 
 # Where log files are stored.  $HADOOP_HOME/logs by default.
-# export HADOOP_LOG_DIR=${HADOOP_HOME}/logs
+export HADOOP_LOG_DIR=${HADOOP_HOME}/logs
 
 # File naming remote slave hosts.  $HADOOP_HOME/conf/slaves by default.
 # export HADOOP_SLAVES=${HADOOP_HOME}/conf/slaves

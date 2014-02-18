@@ -1,4 +1,4 @@
 PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/home/hadoop/hadoop-1.2.1/bin:/home/hadoop/hive-0.12.0/bin"
 HADOOP_HOME="/home/hadoop/hadoop-1.2.1"
 HIVE_HOME="/home/hadoop/hive-0.12.0"
-JAVA_HOME="/usr/lib/jvm/java-7-openjdk-i386"
+JAVA_HOME="/usr/lib/jvm/java-6-openjdk-i386"
