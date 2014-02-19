@@ -158,4 +158,21 @@ execute "cleanup_hive" do
     command "mv /home/hadoop/hive-0.12.0.tar.gz /home/hadoop/hive-0.12.0/" 
     creates "/home/hadoop/hive-0.12.0/hive-0.12.0.tar.gz"
 end
+
+#create hive directories in hdfs
+execute "hadoop fs -mkdir /tmp" do
+    user "hadoop"
+    not_if "hadoop fs -ls /tmp"
+end
+execute "hadoop fs -mkdir /user/hive/warehouse" do
+    user "hadoop"
+    not_if "hadoop fs -ls /user/hive/warehouse"
+end
+execute "hadoop fs -chmod g+w /tmp" do
+    user "hadoop"
+end
+execute "hadoop fs -chmod g+w /user/hive/warehouse" do
+    user "hadoop"
+end
+
  

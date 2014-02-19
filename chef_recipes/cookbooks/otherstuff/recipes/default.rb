@@ -1,7 +1,7 @@
 #install other utilities
 execute "sudo apt-get update"
 
-["vim", "curl", "wget", "rpm", "make", "ssh", "rsync" ].each do |installme|
+["vim", "curl", "wget", "rpm", "make", "ssh", "rsync", "unzip" ].each do |installme|
     package installme do
         action :install
     end
