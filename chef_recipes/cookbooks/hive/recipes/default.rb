@@ -116,16 +116,19 @@ execute "hadoop_format_namenode" do
   command "/home/hadoop/hadoop-1.2.1/bin/hadoop namenode -format"
   creates "/tmp/hadoop-hadoop/dfs/name/"
   user "hadoop"
+  group "hadoop"
 end
 
 # start all the services
 execute "/home/hadoop/hadoop-1.2.1/bin/start-all.sh" do
   not_if "jps | grep 'JobTracker\|NameNode\|DataNode\|TaskTracker'"
   user "hadoop"
+  group "hadoop"
 end
 
  execute "ln -s /home/hadoop/hadoop-1.2.1/ /home/vagrant/hadoop" do
     creates "/home/vagrant/hadoop"
+    user "vagrant"
  end
 
 #clean up
@@ -140,6 +143,7 @@ cookbook_file "/home/hadoop/hive-0.12.0.tar.gz" do
     source "hive-0.12.0.tar.gz"
     mode "0664"
     user "hadoop"
+    group "hadoop"
 end
 
 #unzip it
@@ -147,10 +151,12 @@ execute "unzip_hive" do
     command "cd /home/hadoop && tar -xvzf hive-0.12.0.tar.gz"
     creates "/home/hadoop/hive-0.12.0"
     user "hadoop"
+    group "hadoop"
  end
 
 execute "ln -s /home/hadoop/hive-0.12.0/ /home/vagrant/hive" do
     creates "/home/vagrant/hive"
+    user "vagrant"
  end
  
  #clean up
@@ -162,11 +168,11 @@ end
 #create hive directories in hdfs
 execute "hadoop fs -mkdir /tmp" do
     user "hadoop"
-    not_if "hadoop fs -ls /tmp"
+    not_if "hadoop fs -ls / | grep '/tmp'"
 end
 execute "hadoop fs -mkdir /user/hive/warehouse" do
     user "hadoop"
-    not_if "hadoop fs -ls /user/hive/warehouse"
+    not_if "hadoop fs -ls / | grep '/user'"
 end
 execute "hadoop fs -chmod g+w /tmp" do
     user "hadoop"
@@ -174,5 +180,51 @@ end
 execute "hadoop fs -chmod g+w /user/hive/warehouse" do
     user "hadoop"
 end
+
+#download the file
+cookbook_file "/home/hadoop/hive-0.12.0/conf/hive-site.xml" do
+    source "hive-site.xml"
+    mode "0660"
+    owner "hadoop"
+    group "hadoop"
+end
+
+#download the file
+cookbook_file "/home/hadoop/metastore_db_config.sql" do
+    source "metastore_db_config.sql"
+    mode "0660"
+    owner "hadoop"
+    group "hadoop"
+end
+
+execute "cp /usr/share/java/mysql-connector-java.jar /home/hadoop/hive-0.12.0/lib/mysql-connector-java.jar" do
+    user "hadoop"
+    group "hadoop"
+    creates "/home/hadoop/hive-0.12.0/lib/mysql-connector-java.jar"
+end
+
+execute "cp /usr/share/java/mysql-connector-java.jar /home/hadoop/hadoop-1.2.1/lib/mysql-connector-java.jar" do
+    user "hadoop"
+    group "hadoop"
+    creates "/home/hadoop/hadoop-1.2.1/lib/mysql-connector-java.jar"
+end
+
+execute "mysql -uroot < /home/hadoop/metastore_db_config.sql" do
+    user "hadoop"
+    not_if "mysql -uhive -phive -e 'Select * from metastore.TBLS'"
+end
+
+#start the metastore server
+execute "hive --service metastore &" do
+    user "hadoop"
+    not_if "netstat -anp |grep 9083" #port 10000 is in use
+end
+
+#start the hive server
+execute "hive --service hiveserver &" do
+    user "hadoop"
+    not_if "netstat -anp | grep 10000" #port 10000 is in use
+end
+
 
  
