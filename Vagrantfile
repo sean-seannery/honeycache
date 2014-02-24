@@ -14,10 +14,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # Every Vagrant virtual environment requires a box to build off of.
       hive.vm.box = "precise32"
       hive.vm.hostname = "hive"
-      hive.vm.network "private_network", ip: "192.168.2.200"#, virtualbox__intnet: "ucsb"  
-     # hive.vm.network "private_network", ip: "192.168.1.200", :bridge => 'Wireless Network Connection'	  
-	 # hive.vm.network "forwarded_port", guest: 50070, host: 50070
-	#  hive.vm.network "forwarded_port", guest: 50030, host: 50030
+      hive.vm.network "private_network", ip: "192.168.2.200"
+    # hive.vm.network "private_network", ip: "192.168.1.200", :bridge => 'Wireless Network Connection'	  
+	# hive.vm.network "forwarded_port", guest: 50070, host: 50070
+    # hive.vm.network "forwarded_port", guest: 50030, host: 50030
       hive.vm.provider :virtualbox do |vb|
         # Use VBoxManage to customize the VM. For example to change memory:
         vb.customize ["modifyvm", :id, "--memory", "2048"]
@@ -25,14 +25,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.name = "hive"
       end
       
+       # Share an additional folder to the guest VM. The first argument is
+       # the path on the host to the actual folder. The second argument is
+       # the path on the guest to mount the folder. And the optional third
+       # argument is a set of non-required options.
+      config.vm.synced_folder "./bin", "/home/vagrant/honeycache/bin"
+      config.vm.synced_folder "./src", "/home/vagrant/honeycache/src"
+      
       # config.vm.network :forwarded_port, guest: 80, host: 8080
       
-       hive.vm.provision :chef_solo do |chef|
+      hive.vm.provision :chef_solo do |chef|
          chef.cookbooks_path = "./chef_recipes/cookbooks"
          chef.add_recipe "otherstuff"
          chef.add_recipe "java"
          chef.add_recipe "hive"
-       end
+      end
   end
   
   

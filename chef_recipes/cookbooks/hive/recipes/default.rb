@@ -170,6 +170,7 @@ execute "hadoop fs -mkdir /tmp" do
     user "hadoop"
     not_if "hadoop fs -ls / | grep '/tmp'"
 end
+
 execute "hadoop fs -mkdir /user/hive/warehouse" do
     user "hadoop"
     not_if "hadoop fs -ls / | grep '/user'"
