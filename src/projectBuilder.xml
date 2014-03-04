@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="honeycache.makejar" default="makejar" basedir="..">
+
+    <property name="build.dir"     value="bin"/>
+    <property name="classes.dir"   value="${build.dir}/build"/>
+    <property name="src.dir"       value="src"/>
+    <property name="lib.dir"       value="lib"/>
+    <property name="main.class"    value="honeycache.Hcache"/>
+    <property name="jar.file"      value="${build.dir}/Hcache.jar"/>
+
+    <target name ="makejar" description="Create a jar for the honeycache project">
+    
+        <delete file="${jar.file}" />
+        <delete file="${manifest.file}" />
+    
+
+    
+        <jar jarfile="${jar.file}" basedir="${build.dir}" includes="*.class">
+            <manifest>
+	            <attribute name="built-by" value="Sean" />
+	            <attribute name="Main-Class" value="${main.class}" />
+	        </manifest>
+        	<fileset dir="${classes.dir}" includes="**/*.class" />
+            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" />
+        </jar>
+    </target>
+</project>

@@ -31,6 +31,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
        # argument is a set of non-required options.
       config.vm.synced_folder "./bin", "/home/vagrant/honeycache/bin"
       config.vm.synced_folder "./src", "/home/vagrant/honeycache/src"
+      config.vm.synced_folder "../simple-service", "/home/vagrant/simple-service"
       
       # config.vm.network :forwarded_port, guest: 80, host: 8080
       
