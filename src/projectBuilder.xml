@@ -6,7 +6,7 @@
     <property name="classes.dir"   value="${build.dir}/build"/>
     <property name="src.dir"       value="src"/>
     <property name="lib.dir"       value="lib"/>
-    <property name="main.class"    value="honeycache.Hcache"/>
+    <property name="main.class"    value="honeycache.cli.HCacheMain"/>
     <property name="jar.file"      value="${build.dir}/Hcache.jar"/>
 
     <target name ="makejar" description="Create a jar for the honeycache project">

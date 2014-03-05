@@ -74,7 +74,7 @@ public class MysqlEndpoint implements CacheEndpoint {
 	}
 	
 	@Override
-	public void insertCacheData(ResultSet res) {
+	public void putCacheData(ResultSet res) {
 		
 	}
 

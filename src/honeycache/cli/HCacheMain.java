@@ -1,6 +1,6 @@
-package honeycache;
+package honeycache.cli;
 
-import honeycache.cli.HoneyCacheCLI;
+import honeycache.cache.endpoint.HiveEndpoint;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -11,7 +11,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-public class Hcache {
+public class HCacheMain {
 
 	private static int port = 10000;
 	private static String host = "localhost";
@@ -27,16 +27,26 @@ public class Hcache {
 	public static void main(String[] args) {
 		
 		processArgs(args);
-			
-		HoneyCacheCLI hcache = new HoneyCacheCLI(host, port, user, password);	
+		
+		HiveEndpoint hiveConn = new HiveEndpoint(host, port, user, password);
+		HoneyCacheCLI hcache = new HoneyCacheCLI( hiveConn );	
 		
 		if (filename != null){
-			//process filename;
+			try {
+				hcache.connect();
+				//TODO: process file
+				hcache.disconnect();
+				System.exit(0);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
 		}else if (sqlStatement != null){
 			//process sql and quit
 			try {
 				hcache.connect();
-				hcache.printResults (hcache.processQuery(sqlStatement) );
+				hcache.printResults ( hcache.processQuery(sqlStatement) );
+				hcache.disconnect();
 				System.exit(0);
 			} catch (SQLException e) {
 				e.printStackTrace();

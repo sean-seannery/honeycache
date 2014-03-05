@@ -1,80 +1,42 @@
 package honeycache.cli;
 
-import honeycache.cache.CacheCommander;
+import honeycache.cache.endpoint.HiveEndpoint;
+import honeycache.cache.policy.CacheCommander;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Scanner;
-
 import jline.console.ConsoleReader;
 
 public class HoneyCacheCLI {
 	
 	
 	private static final String PROMPT_STRING = "hcache->";
-	private static final String HIVE_DRIVER_NAME = "org.apache.hadoop.hive.jdbc.HiveDriver";
-	private static final boolean CACHING_ENABLED = true;
 	
-	private Connection hiveConnection;
 	private ConsoleReader prompt;
-	
-	
-	
-	private int port;
-	private String host;
-	private String user;
-	private String password;
-	
-	
-	
+	private CacheCommander cache;
+		
 	public HoneyCacheCLI() {
-		hiveConnection = null;
 		prompt = null;
+		cache = null;
 	}
 	
-	public HoneyCacheCLI(String newHost, int newPort, String newUser, String newPass){
-		hiveConnection = null;
+	public HoneyCacheCLI(HiveEndpoint newConn){
+		cache = new CacheCommander(newConn);
 		prompt = null;
-		host = newHost;
-		port = newPort;
-		user = newUser;
-		password = newPass;
 	}
 	
 	public void connect() throws SQLException{	
-		if (hiveConnection != null){
-			disconnect();
-		}
-		
-		try {
-			Class.forName(HIVE_DRIVER_NAME);
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			System.exit(1);
-		}
-		
-		String connString = "jdbc:hive://" + host +":" + port + "/default";
-		hiveConnection = DriverManager.getConnection(connString, user, password);
 
-		System.out.println("Connected to " + connString);
+		cache.connect();
+
+		System.out.println("Connected to " + cache.getHiveConnection().toString() );
 		System.out.println("------------------------------------------------");
 	}
 	
 	public void disconnect() {		
-		try {
-			hiveConnection.close();
-		} catch (SQLException e) {
-		}
-		hiveConnection = null;
+		cache.disconnect();
 	}
 	
 	public void startCommandLineInput() throws IOException{
@@ -120,12 +82,14 @@ public class HoneyCacheCLI {
 
 		System.out.println (" goodbye.");
 		System.out.println();
+
+		disconnect();
+
 	}
 	
 	public ResultSet processQuery( String query) throws SQLException{
 		query = query.replace(";", "");
 
-		CacheCommander cache = new CacheCommander(hiveConnection);
 		ResultSet res = cache.processQuery(query);
 
 		return res;
