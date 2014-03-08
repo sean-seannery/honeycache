@@ -31,36 +31,25 @@ public class HCacheMain {
 		HiveEndpoint hiveConn = new HiveEndpoint(host, port, user, password);
 		HoneyCacheCLI hcache = new HoneyCacheCLI( hiveConn );	
 		
-		if (filename != null){
-			try {
-				hcache.connect();
-				//TODO: process file
-				hcache.disconnect();
+		try {
+			if (filename != null){
+				//process file
+				hcache.processFile( filename );
 				System.exit(0);
-			} catch (SQLException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-		}else if (sqlStatement != null){
-			//process sql and quit
-			try {
-				hcache.connect();
-				hcache.printResults ( hcache.processQuery(sqlStatement) );
-				hcache.disconnect();
+	
+			}else if (sqlStatement != null){
+				//process sql and quit
+				hcache.printResults ( hcache.processOneQueryAndDisconnect(sqlStatement) );
 				System.exit(0);
-			} catch (SQLException e) {
-				e.printStackTrace();
-				System.exit(1);
-			}
-		} else {
-			//start the command line
-			try {
+				
+			} else {
+				//start the command line
 				hcache.startCommandLineInput();
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.exit(1);
+				System.exit(0);
 			}
-			System.exit(0);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.exit(1);
 		}
 		
 		

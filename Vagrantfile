@@ -29,42 +29,17 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
        # the path on the host to the actual folder. The second argument is
        # the path on the guest to mount the folder. And the optional third
        # argument is a set of non-required options.
-      config.vm.synced_folder "./bin", "/home/vagrant/honeycache/bin"
-      config.vm.synced_folder "./src", "/home/vagrant/honeycache/src"
-      config.vm.synced_folder "../simple-service", "/home/vagrant/simple-service"
+      config.vm.synced_folder ".", "/home/vagrant/honeycache"
       
       # config.vm.network :forwarded_port, guest: 80, host: 8080
       
       hive.vm.provision :chef_solo do |chef|
-         chef.cookbooks_path = "./chef_recipes/cookbooks"
+         chef.cookbooks_path = "./scripts/chef_recipes/cookbooks"
          chef.add_recipe "otherstuff"
          chef.add_recipe "java"
          chef.add_recipe "hive"
       end
   end
   
-  
-=begin 
-  config.vm.define "riak" do |riak|
-      riak.vm.box = "precise32"
-      riak.vm.hostname = "riak"
-      # riak.vm.network "private_network", ip: "192.168.2.201", virtualbox__intnet: "ucsb"
-	  riak.vm.network "public_network", ip: "192.168.1.201", :bridge => 'Wireless Network Connection'
-	  riak.vm.network "forwarded_port", guest: 80, host: 8080
-      riak.vm.provider :virtualbox do |vb|
-        # Use VBoxManage to customize the VM. For example to change memory:
-        vb.customize ["modifyvm", :id, "--memory", "2048"]
-        vb.customize ["modifyvm", :id, "--cpus", "2"]
-        vb.name = "riak"
-      end
-      #config.vm.network :forwarded_port, guest: 80, host: 8080
-      
-       riak.vm.provision :chef_solo do |chef|
-         chef.cookbooks_path = "./chef_recipes/cookbooks"
-         chef.add_recipe "otherstuff"
-         chef.add_recipe "java"
-       end
-  end
-=end
 
 end

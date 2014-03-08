@@ -1,62 +1,99 @@
 package honeycache.cache.policy;
 
-import honeycache.cache.endpoint.CacheEndpoint;
+import honeycache.cache.endpoint.Endpoint;
 import honeycache.cache.endpoint.HiveEndpoint;
 import honeycache.cache.endpoint.MysqlEndpoint;
+import honeycache.cache.model.HCacheProperties;
 
 import java.security.MessageDigest;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.apache.log4j.Logger;
+
+
+
+
 public class CacheCommander {
 	
-	public static final String CACHE_CONTENT_POLICY = "query";  //query or partition or table
-	public static final String CACHE_ENDPOINT = "mysql"; //mysql, hbase, hive
-	
-    private static final boolean CACHING_ENABLED = true;
+	//TODO: These should get read in from a properties file
+
+	public static final HCacheProperties HCACHE_PROPS = new HCacheProperties("config.properties");
+	private final static Logger LOGGER = Logger.getLogger(CacheCommander.class.getName());
 	
 	private HiveEndpoint hiveConnection = null;
-	private CacheEndpoint cacheConn;
+	private Endpoint cacheConn;
 	private CachePolicy policy;
 
 	public CacheCommander(HiveEndpoint newHiveConn) {
+
 		hiveConnection = newHiveConn;
-		if (CACHE_ENDPOINT.equals(CacheEndpoint.MYSQL_ENDPOINT))
-		{
-			cacheConn = new MysqlEndpoint();
-			cacheConn.connect();
+		
+		if (HCACHE_PROPS.getContentPolicy().equalsIgnoreCase(CachePolicy.CACHE_NO_CONTENT)){
+			policy = new NoCachePolicy();		
+		} else {
+			//TODO: add more endpoints
+			if (HCACHE_PROPS.getCacheEndpoint().equalsIgnoreCase(Endpoint.MYSQL_ENDPOINT))
+			{
+				cacheConn = new MysqlEndpoint();
+				try {
+					cacheConn.connect();
+					LOGGER.info("Connected to Cache Datastore" + cacheConn.getConnectionString());
+				} catch (SQLException e) {
+					LOGGER.error("Unable to connect to Cache Datastore" + cacheConn.getConnectionString(), e);
+					cacheConn.close();
+					e.printStackTrace();
+					System.exit(1);
+					
+				}
+			}
+					
+			if (HCACHE_PROPS.getExpirationPolicy().equalsIgnoreCase(CachePolicy.EXPIRATION_POLICY_LRU))
+			{
+				policy = new LRUPolicy(cacheConn);
+			}
+
 		}
-		//TODO: add more endpoints
-		if (CACHE_CONTENT_POLICY.equals("query"))
-		{
-			policy = new LRUPolicy(cacheConn);
-		}
+
 	}
 	
 	public ResultSet processQuery(String query) throws SQLException{
 		
 		ResultSet res = null;
 		//if it is a select statement we need to send it to the caching algorithm
-		if (query.contains("SELECT") && query.contains("FROM") ){
+		if (query.toUpperCase().contains("SELECT") && query.toUpperCase().contains("FROM") ){
 			
-			String cacheKey = generateKey(query);		
+			String cacheKey = generateKey(query);
+			LOGGER.trace("KEY=" + cacheKey + "TYPE=OVERHEAD CACHE=GET TIME=" + System.currentTimeMillis() );
 			res = policy.get(cacheKey);
+			
 					
 			// if the key doesnt exist in the cache
 			if (res == null){
+				LOGGER.trace("KEY=" + cacheKey + "TYPE=OVERHEAD CACHE=MISS TIME=" + System.currentTimeMillis());
+				boolean valid_query = true;
+				try{
+					LOGGER.trace("KEY=" + cacheKey + "TYPE=NOT_OVERHEAD START_QUERY_HIVE TIME=" + System.currentTimeMillis());
+					res = hiveConnection.processQuery(query); //get the data
+					LOGGER.trace("KEY=" + cacheKey + "TYPE=NOT_OVERHEAD END_QUERY_HIVE TIME=" + System.currentTimeMillis());
+				} catch (SQLException e){
+					LOGGER.warn("Invalid Query Results.  Not storing in cache" + query, e);
+					valid_query = false;
+					throw e;
+				}
+				
+				//if the query successfully executes, put it in the cache
+				if (valid_query){
+					//TODO: need to handle what table vs query here	 
+					LOGGER.trace("KEY=" + cacheKey + "TYPE=OVERHEAD CACHE=PUT START_TIME=" + System.currentTimeMillis() );
+					policy.put(cacheKey, res);
+					LOGGER.trace("KEY=" + cacheKey + "TYPE=OVERHEAD CACHE=PUT END_TIME=" + System.currentTimeMillis() );
+					//TODO: Think of a better way to do this.  Currently caching the data results in traversing to the end of the resultset
+					// and hive doesnt support res.beforeFirst()
+					res = cacheConn.getCacheData(cacheKey);
+				}
 
-				res = hiveConnection.processQuery(query); //get the data
-				//TODO: need to handle what table vs query here
-				policy.put(cacheKey, res);                //put it in the cache
-				policy.updateCache();                     //update the cache metadata / delete old records
-
-			}
-			else {
-	        //if they key does exist in the cache
-				policy.updateCache();                     //update the cache metadata / delete old records
-			}
+			}		
 			
 		} else {
 			//we dont want to process updates, deletes, or metadata queries so just connect as normal
@@ -70,7 +107,7 @@ public class CacheCommander {
 	private String generateKey(String query) {
 		String key = null;
 		
-		if (CACHE_CONTENT_POLICY.equals("query")){ 
+		if (HCACHE_PROPS.getContentPolicy().equalsIgnoreCase("query")){ 
 			//MD5of Hash
 			byte md5Hash[];
 			try {
@@ -88,7 +125,7 @@ public class CacheCommander {
 				System.exit(1);
 			} 
 		}
-		if (CACHE_CONTENT_POLICY.equals("table")){
+		if (HCACHE_PROPS.getContentPolicy().equalsIgnoreCase("table")){
 			int start_tbl_idx = query.indexOf("FROM") + 4;
 			while (query.charAt(start_tbl_idx) == ' '){
 				start_tbl_idx++;
@@ -104,19 +141,20 @@ public class CacheCommander {
 	}
 	
 	public void connect() throws SQLException{	
-		if (hiveConnection != null){
-			disconnect();
+		if (hiveConnection == null || hiveConnection.isClosed()){
+			LOGGER.info("Connected to Hive" + hiveConnection.getConnectionString());
+			hiveConnection.connect();
 		}
-		
-		hiveConnection.connect();
+
 	}
 	
-	public void disconnect() {		
-		try {
+	public void disconnect() {	
+		if (hiveConnection != null && !hiveConnection.isClosed()){
 			hiveConnection.close();
-		} catch (SQLException e) {
+			hiveConnection = null;
 		}
-		hiveConnection = null;
+
+		
 	}
 	
 	
