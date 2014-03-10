@@ -4,6 +4,7 @@ import honeycache.cache.endpoint.Endpoint;
 import honeycache.cache.endpoint.HiveEndpoint;
 import honeycache.cache.endpoint.MysqlEndpoint;
 import honeycache.cache.model.HCacheProperties;
+import honeycache.cache.model.SQLQueryParser;
 
 import java.security.MessageDigest;
 import java.sql.ResultSet;
@@ -59,6 +60,16 @@ public class CacheCommander {
 	
 	public ResultSet processQuery(String query) throws SQLException{
 		
+		for(String col : SQLQueryParser.parseColumns(query)){
+			System.out.print("col:"+col);
+		}
+		for(String col : SQLQueryParser.parseTables(query)){
+			System.out.print("tbl:"+col);
+		}
+		for(String col : SQLQueryParser.parseConditionals(query)){
+			System.out.print("cond:"+col);
+		}
+		
 		ResultSet res = null;
 		//if it is a select statement we need to send it to the caching algorithm
 		if (query.toUpperCase().contains("SELECT") && query.toUpperCase().contains("FROM") ){
@@ -67,7 +78,6 @@ public class CacheCommander {
 			LOGGER.trace("KEY=" + cacheKey + "TYPE=OVERHEAD CACHE=GET TIME=" + System.currentTimeMillis() );
 			res = policy.get(cacheKey);
 			
-					
 			// if the key doesnt exist in the cache
 			if (res == null){
 				LOGGER.trace("KEY=" + cacheKey + "TYPE=OVERHEAD CACHE=MISS TIME=" + System.currentTimeMillis());
