@@ -35,5 +35,21 @@
         <value>thrift://localhost:9083</value>
         <description>IP address (or fully-qualified domain name) and port of the metastore host</description>
     </property>
+    
+    
+    
+    <property>
+	  <name>hive.stats.dbclass</name>
+	  <value>jdbc:mysql</value>
+	</property>
+	<property>
+	  <name>hive.stats.jdbcdriver</name>
+	  <value>com.mysql.jdbc.Driver</value>
+	</property>
+	<property>
+	  <name>hive.stats.dbconnectionstring</name>
+	  <value>jdbc:mysql://localhost:3306/hive_stats_db?user=hive&password=hive</value>
+	</property> 
+
  
 </configuration>

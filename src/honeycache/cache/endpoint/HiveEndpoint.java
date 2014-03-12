@@ -1,28 +1,21 @@
 package honeycache.cache.endpoint;
 
 import honeycache.cache.model.HCacheMetadata;
+import honeycache.cache.model.HCacheSQLQuery;
+import honeycache.cache.policy.CacheCommander;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class HiveEndpoint extends AbstractEndpoint implements Endpoint{
+public class HiveEndpoint extends Endpoint{
 	
 	public static final String DRIVER_NAME = "org.apache.hadoop.hive.jdbc.HiveDriver"; 
+	private static final String DATA_TABLE_PREFIX = "t_";
+	private MysqlEndpoint metadataConn;
 
-/*	
-	private String host = "localhost";
-	private int port = 10000;
-	private String user = "";
-	private String password = "";
-	*/
+	//default constructor calls argument constructor
 	public HiveEndpoint(){
-		//super();
-		host = "localhost";
-		port = 10000;
-		user = "";
-		password =  "";
-		connectionString = "jdbc:hive://" + host +":" + port + "/default";
-		driverName = DRIVER_NAME;
+		this("localhost",10000, "", "");
 	}
 	
 	public HiveEndpoint(String newHost, int newPort, String newUser, String newPassword){
@@ -33,7 +26,12 @@ public class HiveEndpoint extends AbstractEndpoint implements Endpoint{
 		password = newPassword;
 		connectionString = "jdbc:hive://" + host +":" + port + "/default";
 		driverName = DRIVER_NAME;
+		metadataConn = new MysqlEndpoint(CacheCommander.HCACHE_PROPS.getMetadataHost(), 
+										 CacheCommander.HCACHE_PROPS.getMetadataPort(), 
+										 CacheCommander.HCACHE_PROPS.getMetadataUser(), 
+										 CacheCommander.HCACHE_PROPS.getMetadataPassword());
 	}
+	
 	
 
 	public String toString() {
@@ -41,75 +39,98 @@ public class HiveEndpoint extends AbstractEndpoint implements Endpoint{
 	}
 
 	@Override
-	public HCacheMetadata getCacheMetadata(String key) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+	public HCacheMetadata getCacheMetadata(HCacheSQLQuery query) throws SQLException {
+		metadataConn.connect();
+		HCacheMetadata retVal = metadataConn.getCacheMetadata(query);
+		return retVal;
 	}
 
 	@Override
 	public HCacheMetadata getOldestCacheEntry() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		metadataConn.connect();
+		HCacheMetadata retVal = metadataConn.getOldestCacheEntry();
+		return retVal;
 	}
 
 	@Override
 	public HCacheMetadata getNewestCacheEntry() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		metadataConn.connect();
+		HCacheMetadata retVal = metadataConn.getNewestCacheEntry();
+		return retVal;
 	}
 
 	@Override
 	public HCacheMetadata getMostFrequentCacheEntry() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		metadataConn.connect();
+		HCacheMetadata retVal = metadataConn.getMostFrequentCacheEntry();
+		return retVal;
 	}
 
 	@Override
 	public HCacheMetadata getLeastFrequentCacheEntry() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		metadataConn.connect();
+		HCacheMetadata retVal = metadataConn.getLeastFrequentCacheEntry();
+		return retVal;
 	}
 
 	@Override
 	public HCacheMetadata getRandomCacheEntry() throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		metadataConn.connect();
+		HCacheMetadata retVal = metadataConn.getRandomCacheEntry();
+		return retVal;
 	}
 
 	@Override
-	public ResultSet getCacheData(String location) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+	public ResultSet getCacheData(String key) throws SQLException {
+		ResultSet results = processQuery("SELECT * from `" + DATA_TABLE_PREFIX + key + "`");
+		return results;
 	}
 
 	@Override
-	public void putCacheData(String key, ResultSet res) throws SQLException {
-		// TODO Auto-generated method stub
+	public void putCacheData(HCacheSQLQuery query, ResultSet res) throws SQLException {
+		String new_data_table_name = DATA_TABLE_PREFIX + query.getUniqueKey();
+		
+		//construct the SQL statements
+		String createAndInsertStatement = "CREATE TABLE " + new_data_table_name +" AS " + query.getQueryString();
+		
+		//create the table
+		processUpdate(createAndInsertStatement);
+		
+		//get the table_size
+		int size = 9999;
+		//TODO: Get the real table size using hdfs
+		
+		
+		HCacheMetadata meta = new HCacheMetadata(query.getUniqueKey(), new_data_table_name, new java.sql.Date( new java.util.Date().getTime() ), 1, size);
+		updateMetadata(meta);
+		
 		
 	}
 
 	@Override
 	public void deleteCacheData(HCacheMetadata key) throws SQLException {
-		// TODO Auto-generated method stub
-		
+		metadataConn.connect();
+		metadataConn.processUpdate("DELETE FROM hcache_key_data WHERE key_id = '"+ key.getKey() + "'");
+				
+		processUpdate("DROP TABLE "+ key.getCacheTableName());
 	}
 
 	@Override
 	public void updateMetadata(HCacheMetadata meta) throws SQLException {
-		// TODO Auto-generated method stub
-		
+		metadataConn.connect();
+		metadataConn.updateMetadata(meta);
 	}
 
 	@Override
 	public int getTotalCacheSize() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		metadataConn.connect();
+		return metadataConn.getTotalCacheSize();
 	}
 
 	@Override
 	public int getTotalCacheEntryCount() throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
+		metadataConn.connect();
+		return metadataConn.getTotalCacheEntryCount();
 	}
 
 

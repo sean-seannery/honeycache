@@ -1,5 +1,7 @@
 package honeycache.cache.policy;
 
+import honeycache.cache.model.HCacheSQLQuery;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -13,11 +15,11 @@ public interface CachePolicy {
 	public static final String EXPIRATION_POLICY_RANDOM = "random";
 	
 	
-	public ResultSet get(String key) throws SQLException;
+	public ResultSet get(HCacheSQLQuery query) throws SQLException;
 	//if the data exists in the cache then return it from the cache and update count
 	//if the doesnt exist in the cache, then get it and put it in.
 	
-	public boolean put(String key, ResultSet data) throws SQLException;
+	public boolean put(HCacheSQLQuery query, ResultSet data) throws SQLException;
 	//put data in the cache, inspect expiration, remove something old
 	
 	public boolean updateCache() throws SQLException;

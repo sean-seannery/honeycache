@@ -1,17 +1,19 @@
 package honeycache.cache.policy;
 
+import honeycache.cache.model.HCacheSQLQuery;
+
 import java.sql.ResultSet;
 
 public class NoCachePolicy implements CachePolicy{
 
 
 	@Override
-	public ResultSet get(String key) {
+	public ResultSet get(HCacheSQLQuery query) {
 		return null;
 	}
 
 	@Override
-	public boolean put(String key, ResultSet data) {
+	public boolean put(HCacheSQLQuery query, ResultSet data) {
 		return true;
 	}
 

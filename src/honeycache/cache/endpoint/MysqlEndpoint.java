@@ -1,42 +1,37 @@
 package honeycache.cache.endpoint;
 
 import honeycache.cache.model.HCacheMetadata;
+import honeycache.cache.model.HCacheSQLQuery;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
-public class MysqlEndpoint extends AbstractEndpoint implements Endpoint {
+public class MysqlEndpoint extends Endpoint {
 	
 	public static final String DRIVER_NAME = "com.mysql.jdbc.Driver";
 	private static final String DATA_TABLE_PREFIX = "t_";
 
-	public MysqlEndpoint(){
-		host = "localhost";
-		port = 3306;
-		dbName = "hcache_store";
-		user = "hcache";
-		password = "hcachepw";
-		connectionString = "jdbc:mysql://" + host + ":" + port + "/"+ dbName;
-		driverName = DRIVER_NAME;
+	//default constructor calls argument constructor
+	public MysqlEndpoint(){	
+		this("localhost", 3306, "hcache", "hcachepw" );
 	}
 	
-	public MysqlEndpoint(String newHost, int newPort, String newDbName, String newUser, String newPassword){
+	public MysqlEndpoint(String newHost, int newPort, String newUser, String newPassword){
 		host = newHost;
 		port = newPort;
-		dbName = newDbName;
 		user = newUser;
 		password = newPassword;
-		connectionString = "jdbc:mysql://" + host + ":" + port + "/"+ dbName;
+		connectionString = "jdbc:mysql://" + host + ":" + port + "/hcache_store";
 		driverName = DRIVER_NAME;
 	}
 
 	
 	@Override
-	public HCacheMetadata getCacheMetadata(String key) throws SQLException{
+	public HCacheMetadata getCacheMetadata(HCacheSQLQuery query) throws SQLException{
 		HCacheMetadata retVal = null;
-		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size from hcache_key_data WHERE key_id = '" + key + "'";
+		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size from hcache_key_data WHERE key_id = '" + query.getUniqueKey() + "'";
 		ResultSet res = processQuery(select_query);
 		if (res.next())
 			retVal = new HCacheMetadata(res.getString("key_id"), res.getString("table_name"), res.getDate("date_accessed"), 
@@ -105,7 +100,7 @@ public class MysqlEndpoint extends AbstractEndpoint implements Endpoint {
 								"ON DUPLICATE KEY UPDATE date_accessed=NOW(), frequency_accessed=frequency_accessed + 1";
 		PreparedStatement prepStmt = dbConn.prepareStatement(insertMetadata);			
 		prepStmt.setString(1, meta.getKey());
-		prepStmt.setString(2, meta.getTableName());
+		prepStmt.setString(2, meta.getCacheTableName());
 		//prepStmt.setDate(3, meta.getDateAccessed());
 		prepStmt.setInt(3, meta.getFrequencyAccessed());
 		prepStmt.setInt(4, meta.getSize());
@@ -128,15 +123,15 @@ public class MysqlEndpoint extends AbstractEndpoint implements Endpoint {
 		processUpdate("DELETE FROM hcache_key_data WHERE key_id = '"+ key.getKey() + "'");
 		
 		//delete table
-		processUpdate("DROP TABLE "+ key.getTableName());
+		processUpdate("DROP TABLE "+ key.getCacheTableName());
 
 	}
 	
 
 	@Override
-	public void putCacheData(String key, ResultSet res) throws SQLException {	
+	public void putCacheData(HCacheSQLQuery query, ResultSet res) throws SQLException {	
 		
-		String new_data_table_name = DATA_TABLE_PREFIX + key;
+		String new_data_table_name = DATA_TABLE_PREFIX + query.getUniqueKey();
 		
 		//construct the SQL statements
 		ResultSetMetaData metadata = res.getMetaData();
@@ -195,7 +190,7 @@ public class MysqlEndpoint extends AbstractEndpoint implements Endpoint {
 			size = sizeData.getInt("size_in_kb");
 		}
 		
-		HCacheMetadata meta = new HCacheMetadata(key, new_data_table_name, new java.sql.Date( new java.util.Date().getTime() ), 1, size);
+		HCacheMetadata meta = new HCacheMetadata(query.getUniqueKey(), new_data_table_name, new java.sql.Date( new java.util.Date().getTime() ), 1, size);
 		updateMetadata(meta);
 		
 
