@@ -18,6 +18,8 @@ CREATE TABLE hcache_key_data
   date_accessed DATETIME,
   frequency_accessed INT,
   size INT,
+  orig_table VARCHAR(50),
+  part_data VARCHAR(255),
   PRIMARY KEY (key_id)
   );
   

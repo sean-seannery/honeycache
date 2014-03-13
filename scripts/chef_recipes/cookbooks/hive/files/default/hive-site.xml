@@ -48,7 +48,7 @@
 	</property>
 	<property>
 	  <name>hive.stats.dbconnectionstring</name>
-	  <value>jdbc:mysql://localhost:3306/hive_stats_db?user=hive&password=hive</value>
+	  <value>jdbc:mysql://localhost:3306/hive_stats_db?user=hive&amp;password=hive</value>
 	</property> 
 
  

@@ -13,9 +13,11 @@ public class LRUPolicy implements CachePolicy{
 
 	private Endpoint cacheEndpoint;
 	private final static Logger LOGGER = Logger.getLogger(LRUPolicy.class.getName());
+	private String contentPolicy;
 	
-	public LRUPolicy(Endpoint cacheConn){
+	public LRUPolicy(Endpoint cacheConn, String newContentPolicy){
 		cacheEndpoint = cacheConn;
+		contentPolicy = newContentPolicy;
 	}
 	
 
@@ -30,12 +32,13 @@ public class LRUPolicy implements CachePolicy{
 			HCacheMetadata cacheMeta = cacheEndpoint.getCacheMetadata(query);	
 			if (cacheMeta != null){
 				//get the data from the location
-				data = cacheEndpoint.getCacheData( cacheMeta.getKey() );
+				data = cacheEndpoint.getCacheData( query , contentPolicy );
+				
 				cacheEndpoint.updateMetadata(cacheMeta);
 			}
 		
 		} catch (SQLException e) {
-			System.out.println("Error Saving Cache Data");
+			System.out.println("Error Retrieving Cache Data");
 			throw e;
 		}
 		
@@ -49,7 +52,7 @@ public class LRUPolicy implements CachePolicy{
 		//insert data
 		try {
 
-			cacheEndpoint.putCacheData(query, data);
+			cacheEndpoint.putCacheData(query, data, contentPolicy);
 
 		} catch (SQLException e) {
 			System.out.println("Error Saving Cache Data");

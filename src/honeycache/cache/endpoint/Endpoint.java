@@ -160,8 +160,8 @@ public abstract class Endpoint {
 	public abstract HCacheMetadata getMostFrequentCacheEntry() throws SQLException;
 	public abstract HCacheMetadata getLeastFrequentCacheEntry() throws SQLException;
 	public abstract HCacheMetadata getRandomCacheEntry() throws SQLException;
-	public abstract ResultSet getCacheData(String key) throws SQLException;
-	public abstract void putCacheData(HCacheSQLQuery query, ResultSet res) throws SQLException;
+	public abstract ResultSet getCacheData(HCacheSQLQuery query, String contentPolicy) throws SQLException;
+	public abstract void putCacheData(HCacheSQLQuery query, ResultSet res, String contentPolicy) throws SQLException;
 	public abstract void deleteCacheData(HCacheMetadata key) throws SQLException;
 	public abstract void updateMetadata(HCacheMetadata meta) throws SQLException;
 	public abstract int getTotalCacheSize() throws SQLException;

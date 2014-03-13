@@ -3,6 +3,7 @@ package honeycache.cache.endpoint;
 import honeycache.cache.model.HCacheMetadata;
 import honeycache.cache.model.HCacheSQLQuery;
 import honeycache.cache.policy.CacheCommander;
+import honeycache.cache.policy.CachePolicy;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -81,18 +82,36 @@ public class HiveEndpoint extends Endpoint{
 	}
 
 	@Override
-	public ResultSet getCacheData(String key) throws SQLException {
-		ResultSet results = processQuery("SELECT * from `" + DATA_TABLE_PREFIX + key + "`");
-		return results;
+	public ResultSet getCacheData(HCacheSQLQuery query, String contentPolicy) throws SQLException {
+		
+		if (contentPolicy.equals(CachePolicy.CACHE_QUERY_CONTENT)){
+			ResultSet results = processQuery("SELECT * from `" + query.generateTableName(contentPolicy) + "`");
+			return results;
+		} else {
+			String newQuery = query.replaceTable(query.generateTableName(contentPolicy));
+			System.out.println("SQL:" + newQuery + "tbl:" + query.generateTableName(contentPolicy));
+			ResultSet results = processQuery(newQuery);
+			return results;
+
+		}
 	}
 
 	@Override
-	public void putCacheData(HCacheSQLQuery query, ResultSet res) throws SQLException {
-		String new_data_table_name = DATA_TABLE_PREFIX + query.getUniqueKey();
+	public void putCacheData(HCacheSQLQuery query, ResultSet res, String contentPolicy) throws SQLException {
+		String new_data_table_name = query.generateTableName(contentPolicy);
 		
 		//construct the SQL statements
-		String createAndInsertStatement = "CREATE TABLE " + new_data_table_name +" AS " + query.getQueryString();
-		
+		String createAndInsertStatement = "";
+		if (contentPolicy.equals(CachePolicy.CACHE_QUERY_CONTENT)) {
+			createAndInsertStatement = "CREATE TABLE " + new_data_table_name +" AS " + query.getQueryString();
+		} else {
+			createAndInsertStatement = "CREATE TABLE " + new_data_table_name +" AS SELECT * FROM " + query.parseTable();
+			String partitions = query.parsePartitions();
+			if (!partitions.isEmpty()){
+				createAndInsertStatement += " WHERE " + query.parsePartitions().replace("|", " AND ");
+			}
+		}
+		System.out.println("SQL: " + createAndInsertStatement);
 		//create the table
 		processUpdate(createAndInsertStatement);
 		
@@ -101,7 +120,8 @@ public class HiveEndpoint extends Endpoint{
 		//TODO: Get the real table size using hdfs
 		
 		
-		HCacheMetadata meta = new HCacheMetadata(query.getUniqueKey(), new_data_table_name, new java.sql.Date( new java.util.Date().getTime() ), 1, size);
+		HCacheMetadata meta = new HCacheMetadata(query.getUniqueKey(), new_data_table_name, new java.sql.Date( new java.util.Date().getTime() ), 1, size
+												, query.parseTable(), query.parsePartitions());
 		updateMetadata(meta);
 		
 		

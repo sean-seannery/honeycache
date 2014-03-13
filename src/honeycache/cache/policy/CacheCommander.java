@@ -43,6 +43,7 @@ public class CacheCommander {
 				
 				policy = new CachePolicyFactory(HCACHE_PROPS.getExpirationPolicy())
 							.withEndpoint(cacheConn)
+							.withContentPolicy(HCACHE_PROPS.getContentPolicy())
 							.build();
 			} catch (SQLException e) {
 				LOGGER.error("Unable to connect to Cache Datastore" + cacheConn.getConnectionString(), e);
@@ -104,7 +105,7 @@ public class CacheCommander {
 					
 					//TODO: Think of a better way to do this.  Currently caching the data results in traversing to the end of the resultset
 					// and hive doesnt support res.beforeFirst()
-					res = cacheConn.getCacheData(key);
+					res = cacheConn.getCacheData(query, HCACHE_PROPS.getContentPolicy());
 				}
 
 			}		

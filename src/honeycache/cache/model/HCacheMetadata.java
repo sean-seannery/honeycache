@@ -10,13 +10,17 @@ public class HCacheMetadata {
 	private Date dateAccessed;
 	private int frequencyAccessed;
 	private int size;
+	private String originalTable;
+	private String partitionData;
 
-	public HCacheMetadata(String key_id, String table_name, Date date_accessed,	int frequency_accessed, int size) {
+	public HCacheMetadata(String key_id, String table_name, Date date_accessed,	int frequency_accessed, int size, String originalTable, String partitionData) {
 		this.key = key_id;
 		this.cacheTableName = table_name;
 		this.dateAccessed = date_accessed;
 		this.frequencyAccessed = frequency_accessed;
 		this.size = size;
+		this.originalTable = originalTable;
+		this.partitionData = partitionData;
 	}
 	
 	public String getKey() {
@@ -48,6 +52,18 @@ public class HCacheMetadata {
 	}
 	public void setSize(int size) {
 		this.size = size;
+	}
+	public String getOriginalTable() {
+		return originalTable;
+	}
+	public void setOriginalTable(String originalTable) {
+		this.originalTable = originalTable;
+	}
+	public String getPartitionData() {
+		return partitionData;
+	}
+	public void setPartitionData(String partitionData) {
+		this.partitionData = partitionData;
 	}
 	
 }

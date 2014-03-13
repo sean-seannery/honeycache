@@ -2,6 +2,8 @@ package honeycache.cache.endpoint;
 
 import honeycache.cache.model.HCacheMetadata;
 import honeycache.cache.model.HCacheSQLQuery;
+import honeycache.cache.policy.CacheCommander;
+import honeycache.cache.policy.CachePolicy;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,7 +13,7 @@ import java.sql.SQLException;
 public class MysqlEndpoint extends Endpoint {
 	
 	public static final String DRIVER_NAME = "com.mysql.jdbc.Driver";
-	private static final String DATA_TABLE_PREFIX = "t_";
+
 
 	//default constructor calls argument constructor
 	public MysqlEndpoint(){	
@@ -31,64 +33,64 @@ public class MysqlEndpoint extends Endpoint {
 	@Override
 	public HCacheMetadata getCacheMetadata(HCacheSQLQuery query) throws SQLException{
 		HCacheMetadata retVal = null;
-		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size from hcache_key_data WHERE key_id = '" + query.getUniqueKey() + "'";
+		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data from hcache_key_data WHERE key_id = '" + query.getUniqueKey() + "'";
 		ResultSet res = processQuery(select_query);
 		if (res.next())
 			retVal = new HCacheMetadata(res.getString("key_id"), res.getString("table_name"), res.getDate("date_accessed"), 
-										res.getInt("frequency_accessed"), res.getInt("size"));
+										res.getInt("frequency_accessed"), res.getInt("size"), res.getString("orig_table"), res.getString("part_data"));
 		return retVal;
 	}
 	
 	public HCacheMetadata getOldestCacheEntry() throws SQLException{
 		HCacheMetadata retVal = null;
-		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size from hcache_key_data " + 
+		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data from hcache_key_data " + 
 								"WHERE date_accessed = (select MIN(date_accessed) from hcache_key_data)";
 		ResultSet res = processQuery(select_query);
 		if (res.next())
 			retVal = new HCacheMetadata(res.getString("key_id"), res.getString("table_name"), res.getDate("date_accessed"), 
-										res.getInt("frequency_accessed"), res.getInt("size"));
+										res.getInt("frequency_accessed"), res.getInt("size"), res.getString("orig_table"), res.getString("part_data"));
 		return retVal;
 	}
 	
 	public HCacheMetadata getNewestCacheEntry() throws SQLException{
 		HCacheMetadata retVal = null;
-		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size from hcache_key_data " + 
+		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data from hcache_key_data " + 
 								"WHERE date_accessed = (select MAX(date_accessed) from hcache_key_data)";
 		ResultSet res = processQuery(select_query);
 		if (res.next())
 			retVal = new HCacheMetadata(res.getString("key_id"), res.getString("table_name"), res.getDate("date_accessed"), 
-										res.getInt("frequency_accessed"), res.getInt("size"));
+										res.getInt("frequency_accessed"), res.getInt("size"), res.getString("orig_table"), res.getString("part_data"));
 		return retVal;
 		
 	};
 	public HCacheMetadata getMostFrequentCacheEntry() throws SQLException{
 		HCacheMetadata retVal = null;
-		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size from hcache_key_data " + 
+		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data from hcache_key_data " + 
 								"WHERE frequency_accessed = (select MAX(frequency_accessed) from hcache_key_data)";
 		ResultSet res = processQuery(select_query);
 		if (res.next())
 			retVal = new HCacheMetadata(res.getString("key_id"), res.getString("table_name"), res.getDate("date_accessed"), 
-										res.getInt("frequency_accessed"), res.getInt("size"));
+										res.getInt("frequency_accessed"), res.getInt("size"), res.getString("orig_table"), res.getString("part_data"));
 		return retVal;
 	};
 	public HCacheMetadata getLeastFrequentCacheEntry() throws SQLException{
 		HCacheMetadata retVal = null;
-		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size from hcache_key_data " + 
+		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data from hcache_key_data " + 
 								"WHERE frequency_accessed = (select MIN(frequency_accessed) from hcache_key_data)";
 		ResultSet res = processQuery(select_query);
 		if (res.next())
 			retVal = new HCacheMetadata(res.getString("key_id"), res.getString("table_name"), res.getDate("date_accessed"), 
-										res.getInt("frequency_accessed"), res.getInt("size"));
+										res.getInt("frequency_accessed"), res.getInt("size"), res.getString("orig_table"), res.getString("part_data"));
 		return retVal;
 	};
 	public HCacheMetadata getRandomCacheEntry() throws SQLException{
 		HCacheMetadata retVal = null;
-		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size from hcache_key_data " + 
-								"ORDER BY RAND() LIMIT 1";
+		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data FROM hcache_key_data " + 
+								"ORDER BY RAND() LIMIT 1"; 
 		ResultSet res = processQuery(select_query);
 		if (res.next())
 			retVal = new HCacheMetadata(res.getString("key_id"), res.getString("table_name"), res.getDate("date_accessed"), 
-										res.getInt("frequency_accessed"), res.getInt("size"));
+										res.getInt("frequency_accessed"), res.getInt("size"), res.getString("orig_table"), res.getString("part_data"));
 		return retVal;
 	};
 	
@@ -96,7 +98,8 @@ public class MysqlEndpoint extends Endpoint {
 	public void updateMetadata(HCacheMetadata meta) throws SQLException {
 		// TODO Auto-generated method stub
 		
-		String insertMetadata = "INSERT INTO hcache_key_data (key_id, table_name, date_accessed, frequency_accessed, size)  VALUES (?, ?, NOW(), ?, ?) " + 
+		String insertMetadata = "INSERT INTO hcache_key_data (key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data) " +
+								" VALUES (?, ?, NOW(), ?, ?, ?, ?) " + 
 								"ON DUPLICATE KEY UPDATE date_accessed=NOW(), frequency_accessed=frequency_accessed + 1";
 		PreparedStatement prepStmt = dbConn.prepareStatement(insertMetadata);			
 		prepStmt.setString(1, meta.getKey());
@@ -104,15 +107,25 @@ public class MysqlEndpoint extends Endpoint {
 		//prepStmt.setDate(3, meta.getDateAccessed());
 		prepStmt.setInt(3, meta.getFrequencyAccessed());
 		prepStmt.setInt(4, meta.getSize());
+		prepStmt.setString(5, meta.getOriginalTable());
+		prepStmt.setString(6, meta.getPartitionData());
+		
 		prepStmt.executeUpdate();
 		
 	}
 	
 	@Override
-	public ResultSet getCacheData(String key) throws SQLException {
+	public ResultSet getCacheData(HCacheSQLQuery query, String contentPolicy) throws SQLException {
 		
-		ResultSet results = processQuery("SELECT * from `" + DATA_TABLE_PREFIX + key + "`");
-		return results;
+		if (contentPolicy.equals(CachePolicy.CACHE_QUERY_CONTENT)){
+			ResultSet results = processQuery("SELECT * from `" + query.generateTableName(contentPolicy) + "`");
+			return results;
+		} else {
+			String newQuery = query.replaceTable(query.generateTableName(contentPolicy));
+			ResultSet results = processQuery(newQuery);
+			return results;
+
+		}
 		
 	}
 	
@@ -129,9 +142,21 @@ public class MysqlEndpoint extends Endpoint {
 	
 
 	@Override
-	public void putCacheData(HCacheSQLQuery query, ResultSet res) throws SQLException {	
+	public void putCacheData(HCacheSQLQuery query, ResultSet res, String contentPolicy) throws SQLException {	
 		
-		String new_data_table_name = DATA_TABLE_PREFIX + query.getUniqueKey();
+		String new_data_table_name = query.generateTableName(contentPolicy);
+		
+		//if the content type is table or partition, then we overwrite res with a select * from table query.
+		if (!contentPolicy.equals(CachePolicy.CACHE_QUERY_CONTENT)){
+			HiveEndpoint endpoint = new HiveEndpoint();
+			endpoint.connect();
+			String getTableSQL = "SELECT * FROM " + query.parseTable();
+			String partitions = query.parsePartitions();
+			if (!partitions.isEmpty()){
+				getTableSQL += " WHERE " + query.parsePartitions().replace("|", " AND ");
+			}
+			res = endpoint.processQuery(getTableSQL);
+		}
 		
 		//construct the SQL statements
 		ResultSetMetaData metadata = res.getMetaData();
@@ -180,7 +205,7 @@ public class MysqlEndpoint extends Endpoint {
 		//TODO: move result set back to first row
 		//res.first(); this doesnt work in hive jdbc
 		
-		
+
 		//get the table_size
 		int size = 9999;
 		String size_query = "SELECT table_name, round(((data_length + index_length) / 1024)) 'size_in_kb' FROM information_schema.TABLES " +
@@ -190,10 +215,11 @@ public class MysqlEndpoint extends Endpoint {
 			size = sizeData.getInt("size_in_kb");
 		}
 		
-		HCacheMetadata meta = new HCacheMetadata(query.getUniqueKey(), new_data_table_name, new java.sql.Date( new java.util.Date().getTime() ), 1, size);
+		HCacheMetadata meta = new HCacheMetadata(query.getUniqueKey(), new_data_table_name, new java.sql.Date( new java.util.Date().getTime() ), 1, size, query.parseTable(), query.parsePartitions());
 		updateMetadata(meta);
 		
 
+	
 	}
 
 	public int getTotalCacheSize() throws SQLException{

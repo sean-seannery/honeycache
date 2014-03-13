@@ -1,10 +1,14 @@
 package honeycache.cache.model;
 
+import honeycache.cache.policy.CachePolicy;
+
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class HCacheSQLQuery {
+	
+	private static final String DATA_TABLE_PREFIX = "hc_";
 	
 	private String query;
 	private String uniqueKey;
@@ -15,12 +19,14 @@ public class HCacheSQLQuery {
 	private int indexOfWhere= -1;
 	private int indexOfGroupBy = -1;
 	private int indexOfOrderBy = -1;
-	
+	private String tableName;
+
 	public HCacheSQLQuery(String newQuery){
 		query = newQuery.trim();
 		if (query.endsWith(";"))
 			query = query.substring( 0, query.length()-1); 
 		uniqueKey = null;
+		tableName = null;
 
 	}
 		
@@ -36,32 +42,35 @@ public class HCacheSQLQuery {
 	}
 
 	
-	public ArrayList<String> parseTables() {
-		parse();
-		ArrayList <String> retVal = new ArrayList<String>();
-		String colString = null;
-		
-		//everything between FROM and WHERE/GROUPBY/ORDERBY
-		if (indexOfWhere != -1) {
-			colString = query.substring(indexOfFrom + 4, indexOfWhere);
-			colString = colString.trim();
-		} else if (indexOfGroupBy != -1) {
-			colString = query.substring(indexOfFrom + 4, indexOfGroupBy);
-			colString = colString.trim();
-		} else if (indexOfOrderBy != -1)
-		{
-			colString = query.substring(indexOfFrom + 4, indexOfOrderBy);
-			colString = colString.trim();
+	public String parseTable() {
+	
+		if (tableName != null){
+			return tableName;
 		} else {
-			colString = query.substring(indexOfFrom + 4, lowerQ.length());
-		}
-
-		if (colString != null) {
-			retVal.addAll( Arrays.asList(colString.split(",| JOIN ")) );
-		}
+			parse();
+			String retVal = null;
 			
-			return retVal;
-		
+			//everything between FROM and WHERE/GROUPBY/ORDERBY
+			if (indexOfWhere != -1) {
+				retVal = query.substring(indexOfFrom + 4, indexOfWhere);
+				retVal = retVal.trim();
+			} else if (indexOfGroupBy != -1) {
+				retVal = query.substring(indexOfFrom + 4, indexOfGroupBy);
+				retVal = retVal.trim();
+			} else if (indexOfOrderBy != -1)
+			{
+				retVal = query.substring(indexOfFrom + 4, indexOfOrderBy);
+				retVal = retVal.trim();
+			} else if (lowerQ.indexOf("limit") != -1)
+			{
+				retVal = query.substring(indexOfFrom + 4, lowerQ.indexOf("limit"));
+				retVal = retVal.trim();
+			} else {
+				retVal = query.substring(indexOfFrom + 4, lowerQ.length());
+			}
+			tableName = retVal.trim();
+			return tableName;
+		}
 
 	}
 	
@@ -78,9 +87,9 @@ public class HCacheSQLQuery {
 	}
 	
 	
-	public ArrayList<String> parseConditionals() {
+	public String parsePartitions() {
 		parse();
-		ArrayList<String> retVal = new ArrayList<String>();
+		String retVal = "";
 		String colString = null;
 		if (indexOfWhere != -1) {
 			if (indexOfGroupBy != -1) {
@@ -94,10 +103,28 @@ public class HCacheSQLQuery {
 				colString = query.substring(indexOfWhere + 5, query.length());
 				colString = colString.trim();
 			}
-		}
-		
-		if (colString != null){
-			retVal.addAll( Arrays.asList(colString.split(" AND | OR ")) );
+			
+			int partIndex = colString.indexOf("dt=");
+			if (partIndex > 0){			 
+				retVal = colString.substring(partIndex, colString.indexOf(" ", partIndex)) + "|";
+			}
+			
+			partIndex = colString.indexOf("hour");
+			if (partIndex > 0){
+				 
+				retVal += colString.substring(partIndex, colString.indexOf(" ", partIndex)) + "|";
+			}
+			
+			partIndex = colString.indexOf("service");
+			if (partIndex > 0){
+				 
+				retVal +=colString.substring(partIndex, colString.indexOf(" ", partIndex));
+			}
+			
+			if (retVal.endsWith("|"))
+				retVal = retVal.substring(0, retVal.length()-1);
+			
+
 		}
 		
 		return retVal;
@@ -131,10 +158,11 @@ public class HCacheSQLQuery {
 	public String getQueryString() {
 		return query;
 	}
+
 	
 	public void generateUniqueKey(String contentType) {
 		
-		if (contentType.equalsIgnoreCase("query")){ 
+		if (contentType.equalsIgnoreCase(CachePolicy.CACHE_QUERY_CONTENT)){ 
 			//MD5of Hash
 			byte md5Hash[];
 			try {
@@ -152,16 +180,35 @@ public class HCacheSQLQuery {
 				System.exit(1);
 			} 
 		}
-		if (contentType.equalsIgnoreCase("table")){
+		if (contentType.equalsIgnoreCase(CachePolicy.CACHE_PARTITION_CONTENT)){
 			
-			HCacheSQLQuery queryParser = new HCacheSQLQuery(query);
-			for (String tblName : queryParser.parseTables()) {
-				uniqueKey += tblName;
-			}
+			uniqueKey = parseTable();
+			uniqueKey += parsePartitions();
 
 		}
 	}
 	
+	public String replaceTable(String newTable){
+		String queryCopy = query;
+		String oldTable = parseTable();
+		
+		queryCopy = queryCopy.replaceAll("\\b"+oldTable+"\\b", newTable);
+		
+		return queryCopy;
+	}
+	
+	public String generateTableName( String contentPolicy ){
+		if (contentPolicy.equals(CachePolicy.CACHE_QUERY_CONTENT)){
+			return DATA_TABLE_PREFIX + getUniqueKey();
+		} else { 
+			String newPartitions = parsePartitions().replaceAll("\"|\'", "").replaceAll("[^\\dA-Za-z ]", "_");
+			String newTable = DATA_TABLE_PREFIX + parseTable();
+			if (!newPartitions.isEmpty()){
+				newTable += "_" + newPartitions;
+			}
+			return newTable;
+		}
+	}
 	
 
 	
