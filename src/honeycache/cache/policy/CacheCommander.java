@@ -106,6 +106,20 @@ public class CacheCommander {
 
 			}		
 			
+		} else if (sqlQuery.trim().equalsIgnoreCase("!help")){
+			//delete the cache entries
+			String help_string = 
+					"\nHoneycache is a tool that helps store frequent distributed queries in order \n" +
+					"to speed up the time to retrieve them. You can configure how things get stored, \n" + 
+				    "where things get stored, and other settings in $HCACHE_HOME/conf/config.properties. \n " + 
+				    "For the command line options, type 'bin/Hcache.sh -h'. \n \n" +
+					"COMMANDS\n" +
+				    "!help         -  prints out this display\n" + 
+					"!kill_cache   -  resets the cache and destroys all cached data.";
+			
+			System.out.println(help_string);
+			
+			
 		} else if (sqlQuery.trim().equalsIgnoreCase("!kill_cache")){
 			//delete the cache entries
 			cacheConn.destroyTheCache();
@@ -117,9 +131,9 @@ public class CacheCommander {
 		}
 
 		long endTime = System.currentTimeMillis();
-		double elapsedTimeInS = (endTime - startTime) / 1000;
+		double elapsedTimeInS = (endTime - startTime) / 1000.00;
 		DecimalFormat df = new DecimalFormat("#.##");
-		System.out.print("QUERY EXECUTION TIME:" + df.format(elapsedTimeInS));
+		System.out.println("QUERY EXECUTION TIME:" + df.format(elapsedTimeInS));
 		LOGGER.info("QUERY: " + sqlQuery);
 		LOGGER.info("QUERY EXECUTION TIME: " + df.format(elapsedTimeInS) );
 		return res;

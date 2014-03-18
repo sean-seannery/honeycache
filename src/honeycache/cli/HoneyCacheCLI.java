@@ -36,6 +36,7 @@ public class HoneyCacheCLI {
 		cache.connect();
 
 		System.out.println("Connected to " + cache.getHiveConnection().toString() );
+		System.out.println("   type !help for a list of commands and options");
 		System.out.println("------------------------------------------------");
 	}
 	
@@ -73,8 +74,13 @@ public class HoneyCacheCLI {
 					command = command.replaceAll(EOL, " ");
 					ResultSet results;
 					try {
+						long startTime = System.currentTimeMillis();
 						results = processOneQuery(command);
 						printResults(results);
+						long endTime = System.currentTimeMillis();
+						double elapsedTimeInS = (endTime - startTime) / 1000.00;
+						DecimalFormat df = new DecimalFormat("#.##");
+						System.out.println("TOTAL EXECUTION TIME:" + df.format(elapsedTimeInS));
 					} catch (SQLException e) {
 						System.out.println("There was an error with your query.");
 						System.out.println(e.getSQLState() +"- " + e.getMessage());
