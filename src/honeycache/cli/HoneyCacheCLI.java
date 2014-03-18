@@ -62,6 +62,7 @@ public class HoneyCacheCLI {
 		}
 		prompt.setPrompt(PROMPT_STRING);
 		prompt.setHistoryEnabled(true);
+		prompt.setExpandEvents(false);
 		
 		String line = null;
 		String command = "";
