@@ -5,6 +5,7 @@ import honeycache.cache.model.HCacheSQLQuery;
 import honeycache.cache.policy.CacheCommander;
 import honeycache.cache.policy.CachePolicy;
 
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -154,6 +155,16 @@ public class HiveEndpoint extends Endpoint{
 	}
 
 
+
+	public void destroyTheCache() throws SQLException{
+		metadataConn.connect();
+		ResultSet cachedTables = metadataConn.processQuery("SELECT key_id FROM hcache_key_data");
+		while (cachedTables.next()){
+			 
+			deleteCacheData( new HCacheMetadata(cachedTables.getString(1), null,null,0, 0,null, null) );
+			
+		}
+	}
 
 
 

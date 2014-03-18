@@ -166,6 +166,7 @@ public abstract class Endpoint {
 	public abstract void updateMetadata(HCacheMetadata meta) throws SQLException;
 	public abstract int getTotalCacheSize() throws SQLException;
 	public abstract int getTotalCacheEntryCount() throws SQLException;
+	public abstract void destroyTheCache() throws SQLException;
 
 
 }

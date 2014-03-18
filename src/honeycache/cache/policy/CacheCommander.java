@@ -10,6 +10,7 @@ import honeycache.cache.model.HCacheSQLQuery;
 import java.security.MessageDigest;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 
 import org.apache.log4j.Logger;
 
@@ -61,7 +62,8 @@ public class CacheCommander {
 	
 	public ResultSet processQuery(String sqlQuery) throws SQLException{
 		
-
+		 long startTime = System.currentTimeMillis();
+		
 		HCacheSQLQuery query = new HCacheSQLQuery(sqlQuery);
 		
 		ResultSet res = null;
@@ -71,27 +73,20 @@ public class CacheCommander {
 			query.generateUniqueKey(HCACHE_PROPS.getContentPolicy());
 			String key = query.getUniqueKey();
 			
-			LOGGER.trace("KEY=" + key + "TYPE=OVERHEAD CACHE=GET TIME=" + System.currentTimeMillis() );
 			res = policy.get(query);
 			
 			// if the key doesnt exist in the cache
 			if (res == null){
-				LOGGER.trace("KEY=" + key + "TYPE=OVERHEAD CACHE=MISS TIME=" + System.currentTimeMillis());
 				boolean valid_query = true;
 				try{
-					LOGGER.trace("KEY=" + key + "TYPE=NOT_OVERHEAD START_QUERY_HIVE TIME=" + System.currentTimeMillis());
 					res = hiveConnection.processQuery(sqlQuery); //get the data
-					LOGGER.trace("KEY=" + key + "TYPE=NOT_OVERHEAD END_QUERY_HIVE TIME=" + System.currentTimeMillis());
 				} catch (SQLException e){
-					LOGGER.warn("Invalid Query Results.  Not storing in cache" + query, e);
 					valid_query = false;
 					throw e;
 				}
 				
 				//if the query successfully executes, put it in the cache
 				if (valid_query && !HCACHE_PROPS.getContentPolicy().equals(CachePolicy.CACHE_NO_CONTENT)){
-					//TODO: need to handle what table vs query here	 
-					LOGGER.trace("KEY=" + key + "TYPE=OVERHEAD CACHE=PUT START_TIME=" + System.currentTimeMillis() );
 					policy.put(query, res);
 					
 					//if our cache is full, we need to delete something;
@@ -101,20 +96,32 @@ public class CacheCommander {
 						
 					}
 					
-					LOGGER.trace("KEY=" + key + "TYPE=OVERHEAD CACHE=PUT END_TIME=" + System.currentTimeMillis() );
 					
-					//TODO: Think of a better way to do this.  Currently caching the data results in traversing to the end of the resultset
-					// and hive doesnt support res.beforeFirst()
+
+					if (HCACHE_PROPS.getCacheEndpoint().endsWith(Endpoint.MYSQL_ENDPOINT))
+						//TODO: Think of a better way to do this.  Currently caching the data results in mysql results in traversing to the 
+						// end of the resultset and hive doesnt support res.beforeFirst() so I have to run the query again.
 					res = cacheConn.getCacheData(query, HCACHE_PROPS.getContentPolicy());
 				}
 
 			}		
 			
-		} else {
+		} else if (sqlQuery.trim().equalsIgnoreCase("!kill_cache")){
+			//delete the cache entries
+			cacheConn.destroyTheCache();
+			
+		} else
+		{
 			//we dont want to process updates, deletes, or metadata queries so just connect as normal
 			res = hiveConnection.processQuery(sqlQuery);
 		}
 
+		long endTime = System.currentTimeMillis();
+		double elapsedTimeInS = (endTime - startTime) / 1000;
+		DecimalFormat df = new DecimalFormat("#.##");
+		System.out.print("QUERY EXECUTION TIME:" + df.format(elapsedTimeInS));
+		LOGGER.info("QUERY: " + sqlQuery);
+		LOGGER.info("QUERY EXECUTION TIME: " + df.format(elapsedTimeInS) );
 		return res;
 	}
 	

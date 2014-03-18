@@ -96,7 +96,6 @@ public class MysqlEndpoint extends Endpoint {
 	
 	@Override
 	public void updateMetadata(HCacheMetadata meta) throws SQLException {
-		// TODO Auto-generated method stub
 		
 		String insertMetadata = "INSERT INTO hcache_key_data (key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data) " +
 								" VALUES (?, ?, NOW(), ?, ?, ?, ?) " + 
@@ -203,7 +202,7 @@ public class MysqlEndpoint extends Endpoint {
 		}
 		prepStmt.executeBatch();	
 		//TODO: move result set back to first row
-		//res.first(); this doesnt work in hive jdbc
+		//res.first() is not supported for hive jdbc so we must rerun the query again in the cachecommander
 		
 
 		//get the table_size
@@ -241,6 +240,14 @@ public class MysqlEndpoint extends Endpoint {
 		return size;
 	}
 
-	
+	public void destroyTheCache() throws SQLException{
+		connect();
+		ResultSet cachedTables = processQuery("SELECT key_id FROM hcache_key_data");
+		while (cachedTables.next()){
+			 
+			deleteCacheData( new HCacheMetadata(cachedTables.getString(1), null,null,0, 0,null, null) );
+			
+		}
+	}
 	
 }
