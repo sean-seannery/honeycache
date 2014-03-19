@@ -2,8 +2,8 @@ package honeycache.cache.endpoint;
 
 import honeycache.cache.model.HCacheMetadata;
 import honeycache.cache.model.HCacheSQLQuery;
-import honeycache.cache.policy.CacheCommander;
 import honeycache.cache.policy.CachePolicy;
+import honeycache.cache.server.CacheCommander;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

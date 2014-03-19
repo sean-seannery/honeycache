@@ -9,11 +9,10 @@ import java.sql.SQLException;
 
 import org.apache.log4j.Logger;
 
-public class LRUPolicy extends CachePolicy{
-
+public class RANDPolicy extends CachePolicy {
 
 	
-	public LRUPolicy(Endpoint cacheConn, String newContentPolicy){
+	public RANDPolicy(Endpoint cacheConn, String newContentPolicy){
 		cacheEndpoint = cacheConn;
 		contentPolicy = newContentPolicy;
 	}
@@ -24,7 +23,7 @@ public class LRUPolicy extends CachePolicy{
 		
 		try{			
 			    //delete oldest query
-				HCacheMetadata oldest = cacheEndpoint.getOldestCacheEntry();
+				HCacheMetadata oldest = cacheEndpoint.getRandomCacheEntry();
 				cacheEndpoint.deleteCacheData(oldest);	
 		} catch (SQLException e){
 			System.out.println("Error Updating Cache");

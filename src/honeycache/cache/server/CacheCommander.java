@@ -1,4 +1,4 @@
-package honeycache.cache.policy;
+package honeycache.cache.server;
 
 import honeycache.cache.endpoint.Endpoint;
 import honeycache.cache.endpoint.EndpointFactory;
@@ -6,6 +6,9 @@ import honeycache.cache.endpoint.HiveEndpoint;
 import honeycache.cache.endpoint.MysqlEndpoint;
 import honeycache.cache.model.HCacheProperties;
 import honeycache.cache.model.HCacheSQLQuery;
+import honeycache.cache.policy.CachePolicy;
+import honeycache.cache.policy.CachePolicyFactory;
+import honeycache.cache.policy.NoCachePolicy;
 
 import java.security.MessageDigest;
 import java.sql.ResultSet;
@@ -92,7 +95,7 @@ public class CacheCommander {
 					//if our cache is full, we need to delete something;
 					if ( cacheConn.getTotalCacheSize() > HCACHE_PROPS.getMaxCacheSize()  || cacheConn.getTotalCacheEntryCount() > HCACHE_PROPS.getMaxCacheEntries() ){
 
-						policy.updateCache(); 
+						policy.phaseOutCacheItem(); 
 						
 					}
 					

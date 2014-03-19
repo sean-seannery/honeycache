@@ -39,7 +39,8 @@ public class HCacheMain {
 	
 			}else if (sqlStatement != null){
 				//process sql and quit
-				hcache.printResults ( hcache.processOneQueryAndDisconnect(sqlStatement) );
+				hcache.printResults ( hcache.processOneQuery(sqlStatement) );
+				hcache.disconnect();
 				System.exit(0);
 				
 			} else {

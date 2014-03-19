@@ -1,7 +1,7 @@
 package honeycache.cli;
 
 import honeycache.cache.endpoint.HiveEndpoint;
-import honeycache.cache.policy.CacheCommander;
+import honeycache.cache.server.CacheCommander;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -163,25 +163,15 @@ public class HoneyCacheCLI {
 		cache.disconnect();
 		
 		long endTime = System.currentTimeMillis();
-		double elapsedTimeInS = (endTime - startTime) / 1000;
+		double elapsedTimeInS = (endTime - startTime) / 1000.00;
 		DecimalFormat df = new DecimalFormat("#.##");
         System.out.print("FILE EXECUTION TIME:" + df.format(elapsedTimeInS));
 		LOGGER.info("FILE: " + filename);
 		LOGGER.info("FILE EXECUTION TIME: " + df.format(elapsedTimeInS) );
 
 	}
-	
-	public ResultSet processOneQueryAndDisconnect( String query) throws SQLException{
-		cache.connect();
-		
-		ResultSet res = cache.processQuery(query);
-		
-		cache.disconnect();
 
-		return res;
-	}
-	
-	private ResultSet processOneQuery( String query) throws SQLException{
+	public ResultSet processOneQuery( String query) throws SQLException{
 
 		ResultSet res = cache.processQuery(query);
 		return res;

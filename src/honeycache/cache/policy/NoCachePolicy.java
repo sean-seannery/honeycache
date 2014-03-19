@@ -4,7 +4,7 @@ import honeycache.cache.model.HCacheSQLQuery;
 
 import java.sql.ResultSet;
 
-public class NoCachePolicy implements CachePolicy{
+public class NoCachePolicy extends CachePolicy{
 
 
 	@Override
@@ -18,7 +18,7 @@ public class NoCachePolicy implements CachePolicy{
 	}
 
 	@Override
-	public boolean updateCache() {
+	public boolean phaseOutCacheItem() {
 		return true;
 	}
 
