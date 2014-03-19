@@ -158,7 +158,7 @@ public class HiveEndpoint extends Endpoint{
 
 	public void destroyTheCache() throws SQLException{
 		metadataConn.connect();
-		ResultSet cachedTables = processQuery("SELECT key_id, table_name FROM hcache_key_data");
+		ResultSet cachedTables = metadataConn.processQuery("SELECT key_id, table_name FROM hcache_key_data");
 		while (cachedTables.next()){
 			 
 			metadataConn.deleteCacheData( new HCacheMetadata(cachedTables.getString(1), cachedTables.getString(2),null,0, 0,null, null) );
