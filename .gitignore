@@ -1,5 +1,7 @@
+logs/
 /bin/build
 /.vagrant
 .project
 .classpath
 .settings
+.externalToolBuilders/

@@ -36,7 +36,7 @@ public class HoneyCacheCLI {
 		cache.connect();
 
 		System.out.println("\nConnected to " + cache.getHiveConnection().toString() );
-		System.out.println("   type !help for a list of commands and options");
+		System.out.println("   type !help; for a list of commands and options");
 		System.out.println("------------------------------------------------");
 	}
 	

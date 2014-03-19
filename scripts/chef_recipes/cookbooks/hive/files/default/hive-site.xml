@@ -36,8 +36,8 @@
         <description>IP address (or fully-qualified domain name) and port of the metastore host</description>
     </property>
     
-    
-    
+    <!--  you may want to update your AWS key information here if you are connecting to S3 -->
+       
     <property>
 	  <name>hive.stats.dbclass</name>
 	  <value>jdbc:mysql</value>

@@ -106,7 +106,7 @@ public class CacheCommander {
 
 			}		
 			
-		} else if (sqlQuery.trim().equalsIgnoreCase("!help")){
+		} else if (sqlQuery.trim().equalsIgnoreCase("!help;")){
 			//delete the cache entries
 			String help_string = 
 					"\nHoneycache is a tool that helps store frequent distributed queries in order \n" +
@@ -120,7 +120,7 @@ public class CacheCommander {
 			System.out.println(help_string);
 			
 			
-		} else if (sqlQuery.trim().equalsIgnoreCase("!kill_cache")){
+		} else if (sqlQuery.trim().equalsIgnoreCase("!kill_cache;")){
 			//delete the cache entries
 			cacheConn.destroyTheCache();
 			
