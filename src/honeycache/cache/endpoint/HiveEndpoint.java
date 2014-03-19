@@ -131,7 +131,7 @@ public class HiveEndpoint extends Endpoint{
 	@Override
 	public void deleteCacheData(HCacheMetadata key) throws SQLException {
 		metadataConn.connect();
-		metadataConn.processUpdate("DELETE FROM hcache_key_data WHERE key_id = '"+ key.getKey() + "'");
+		metadataConn.processUpdate("DELETE FROM hcache_key_data WHERE key_id = \""+ key.getKey() + "\"");
 				
 		processUpdate("DROP TABLE "+ key.getCacheTableName());
 	}

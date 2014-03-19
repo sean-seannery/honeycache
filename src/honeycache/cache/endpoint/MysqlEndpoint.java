@@ -33,7 +33,7 @@ public class MysqlEndpoint extends Endpoint {
 	@Override
 	public HCacheMetadata getCacheMetadata(HCacheSQLQuery query) throws SQLException{
 		HCacheMetadata retVal = null;
-		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data from hcache_key_data WHERE key_id = '" + query.getUniqueKey() + "'";
+		String select_query = "SELECT key_id, table_name, date_accessed, frequency_accessed, size, orig_table, part_data from hcache_key_data WHERE key_id = \"" + query.getUniqueKey() + "\"";
 		ResultSet res = processQuery(select_query);
 		if (res.next())
 			retVal = new HCacheMetadata(res.getString("key_id"), res.getString("table_name"), res.getDate("date_accessed"), 
@@ -132,7 +132,7 @@ public class MysqlEndpoint extends Endpoint {
 	public void deleteCacheData(HCacheMetadata key) throws SQLException{
 
 		//delete metadata
-		processUpdate("DELETE FROM hcache_key_data WHERE key_id = '"+ key.getKey() + "'");
+		processUpdate("DELETE FROM hcache_key_data WHERE key_id = \""+ key.getKey() + "\"");
 		
 		//delete table
 		processUpdate("DROP TABLE "+ key.getCacheTableName() + " IF EXISTS");
