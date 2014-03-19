@@ -5,6 +5,7 @@ import honeycache.cache.policy.CachePolicy;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.StringTokenizer;
 
 public class HCacheSQLQuery {
 	
@@ -102,25 +103,24 @@ public class HCacheSQLQuery {
 			} else {
 				colString = query.substring(indexOfWhere + 5, query.length());
 				colString = colString.trim();
-			}
-			System.out.println("colString:" +colString);
-			int partIndex = colString.indexOf("dt=");
-			if (partIndex > 0){			 
-				retVal = colString.substring(partIndex, colString.indexOf(" ", partIndex)) + "|";
-			}
-			System.out.println("retVal:" +retVal);
-			partIndex = colString.indexOf("hour");
-			if (partIndex > 0){
-				 
-				retVal += colString.substring(partIndex, colString.indexOf(" ", partIndex)) + "|";
-			}
-			System.out.println("retVal:" +retVal);
-			partIndex = colString.indexOf("service");
-			if (partIndex > 0){
-				 
-				retVal +=colString.substring(partIndex, colString.indexOf(" ", partIndex));
+			}		
+
+			
+			if (parseTable().equals("telemetry_hourly_tbl")) {
+				for (String token : colString.split("and|or|not")){
+					
+					/*for (String b : s.split("!=|<>|>=|<=|>|<|=")){
+					System.out.println("     " + b.trim());
+					}*/
+					
+					if (token.contains("dt") || token.contains("hour") || token.contains("service")){			 
+						retVal += token.trim() + "|";
+					}
+					
+				}
 			}
 			
+		
 			if (retVal.endsWith("|"))
 				retVal = retVal.substring(0, retVal.length()-1);
 			
