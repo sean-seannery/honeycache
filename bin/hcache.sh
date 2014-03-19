@@ -13,4 +13,4 @@ for i in ${HIVE_HOME}/lib/*.jar ; do
     CLASSPATH=$CLASSPATH:$i
 done
  
-java -cp $CLASSPATH -D logfileLoc=$MY_DIR/../logs honeycache.cli.HCacheMain "$@"
+java -cp $CLASSPATH honeycache.cli.HCacheMain "$@"
