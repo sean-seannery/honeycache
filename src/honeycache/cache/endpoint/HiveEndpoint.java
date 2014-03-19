@@ -133,7 +133,7 @@ public class HiveEndpoint extends Endpoint{
 		metadataConn.connect();
 		metadataConn.processUpdate("DELETE FROM hcache_key_data WHERE key_id = '"+ key.getKey() + "'");
 				
-		processUpdate("DROP TABLE "+ key.getCacheTableName());
+		processUpdate("DROP TABLE "+ key.getCacheTableName() + " IF EXISTS");
 	}
 
 	@Override

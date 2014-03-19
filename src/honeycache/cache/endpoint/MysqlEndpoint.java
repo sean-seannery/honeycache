@@ -135,7 +135,7 @@ public class MysqlEndpoint extends Endpoint {
 		processUpdate("DELETE FROM hcache_key_data WHERE key_id = '"+ key.getKey() + "'");
 		
 		//delete table
-		processUpdate("DROP TABLE "+ key.getCacheTableName());
+		processUpdate("DROP TABLE "+ key.getCacheTableName() + " IF EXISTS");
 
 	}
 	
