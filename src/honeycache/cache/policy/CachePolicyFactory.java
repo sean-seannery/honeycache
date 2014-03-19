@@ -22,6 +22,12 @@ public class CachePolicyFactory {
 		if (policyType.equals(CachePolicy.EXPIRATION_POLICY_LRU))
 			return new LRUPolicy(cacheEndpoint, contentPolicy);
 		
+		if (policyType.equals(CachePolicy.EXPIRATION_POLICY_LFU))
+			return new LFUPolicy(cacheEndpoint, contentPolicy);
+		
+		if (policyType.equals(CachePolicy.EXPIRATION_POLICY_RANDOM))
+			return new RANDPolicy(cacheEndpoint, contentPolicy);
+		
 		throw new Exception("Policy type "+ policyType +" doesn't exist. Check your properties.config settings");
 		 
    }

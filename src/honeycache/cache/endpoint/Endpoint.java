@@ -2,6 +2,7 @@ package honeycache.cache.endpoint;
 
 import honeycache.cache.model.HCacheMetadata;
 import honeycache.cache.model.HCacheSQLQuery;
+import honeycache.cache.server.CacheCommander;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,11 +10,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.apache.log4j.Logger;
+
 public abstract class Endpoint {
 	
 	public static final String MYSQL_ENDPOINT = "mysql";
 	public static final String HBASE_ENDPOINT = "hbase";
 	public static final String HIVE_ENDPOINT = "hive";
+	private final static Logger LOGGER = Logger.getLogger(Endpoint.class.getName());
 
 	protected Connection dbConn;
 	protected String driverName;
@@ -68,9 +72,12 @@ public abstract class Endpoint {
 	}
 
 	public ResultSet processQuery( String query ) throws SQLException{
+		
 		query = query.trim();
 		if (query.endsWith(";"))
 			query = query.substring( 0, query.length()-1); 
+		
+		LOGGER.info("QUERY: " + query);
 
 		Statement stmt = dbConn.createStatement();
 		ResultSet res = stmt.executeQuery(query);
@@ -83,6 +90,7 @@ public abstract class Endpoint {
 		if (query.endsWith(";"))
 			query = query.substring( 0, query.length()-1); 
 
+		LOGGER.info("QUERY: " + query);
 		Statement stmt = dbConn.createStatement();
 		stmt.execute(query);
 

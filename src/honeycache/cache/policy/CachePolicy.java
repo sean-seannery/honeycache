@@ -17,6 +17,7 @@ public abstract class CachePolicy {
 	public static final String CACHE_NO_CONTENT = "none";
 	public static final String EXPIRATION_POLICY_LRU = "lru";
 	public static final String EXPIRATION_POLICY_RANDOM = "random";
+	public static final String EXPIRATION_POLICY_LFU = "lfu";
 	
 	protected Endpoint cacheEndpoint;
 	protected final static Logger LOGGER = Logger.getLogger(CachePolicy.class.getName());
