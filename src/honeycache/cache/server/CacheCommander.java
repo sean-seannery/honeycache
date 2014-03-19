@@ -82,6 +82,7 @@ public class CacheCommander {
 			if (res == null){
 				boolean valid_query = true;
 				try{
+					LOGGER.info("CACHEMISS");
 					res = hiveConnection.processQuery(sqlQuery); //get the data
 				} catch (SQLException e){
 					valid_query = false;
@@ -107,7 +108,9 @@ public class CacheCommander {
 					res = cacheConn.getCacheData(query, HCACHE_PROPS.getContentPolicy());
 				}
 
-			}		
+			} else {
+				LOGGER.info("CACHEHIT");
+			}
 			
 		} else if (sqlQuery.trim().equalsIgnoreCase("!help;")){
 			//delete the cache entries

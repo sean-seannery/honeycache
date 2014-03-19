@@ -100,7 +100,11 @@ public class HCacheSQLQuery {
 			{
 				colString = query.substring(indexOfWhere + 5, indexOfOrderBy);
 				colString = colString.trim();
-			} else {
+			}  else if (lowerQ.indexOf("limit") != -1)	{
+				colString = query.substring(indexOfWhere + 5, lowerQ.indexOf("limit"));
+				colString = colString.trim();
+			} 
+			else {
 				colString = query.substring(indexOfWhere + 5, query.length());
 				colString = colString.trim();
 			}		

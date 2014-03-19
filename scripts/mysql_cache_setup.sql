@@ -13,12 +13,12 @@ USE hcache_store;
 
 DROP TABLE IF EXISTS hcache_key_data;
 CREATE TABLE hcache_key_data
- (key_id VARCHAR(36),
-  table_name VARCHAR(50) NOT NULL,
+ (key_id VARCHAR(255),
+  table_name VARCHAR(255) NOT NULL,
   date_accessed DATETIME,
   frequency_accessed INT,
   size INT,
-  orig_table VARCHAR(50),
+  orig_table VARCHAR(255),
   part_data VARCHAR(255),
   PRIMARY KEY (key_id)
   );

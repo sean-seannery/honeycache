@@ -36,6 +36,11 @@
         <description>IP address (or fully-qualified domain name) and port of the metastore host</description>
     </property>
     
+    <property>
+        <name>hive.optimize.cp</name>
+        <value>false</value>
+    </property>
+
     <!--  you may want to update your AWS key information here if you are connecting to S3 -->
        
     <property>

@@ -77,7 +77,7 @@ public abstract class Endpoint {
 		if (query.endsWith(";"))
 			query = query.substring( 0, query.length()-1); 
 		
-		LOGGER.info("QUERY: " + query);
+		LOGGER.trace("QUERY: " + query);
 
 		Statement stmt = dbConn.createStatement();
 		ResultSet res = stmt.executeQuery(query);
@@ -90,7 +90,7 @@ public abstract class Endpoint {
 		if (query.endsWith(";"))
 			query = query.substring( 0, query.length()-1); 
 
-		LOGGER.info("QUERY: " + query);
+		LOGGER.trace("QUERY: " + query);
 		Statement stmt = dbConn.createStatement();
 		stmt.execute(query);
 
