@@ -35,7 +35,7 @@ public class HoneyCacheCLI {
 
 		cache.connect();
 
-		System.out.println("Connected to " + cache.getHiveConnection().toString() );
+		System.out.println("\nConnected to " + cache.getHiveConnection().toString() );
 		System.out.println("   type !help for a list of commands and options");
 		System.out.println("------------------------------------------------");
 	}
@@ -189,22 +189,23 @@ public class HoneyCacheCLI {
 	
 	
 	public void printResults( ResultSet results) throws SQLException{
-		ResultSetMetaData metadata = results.getMetaData();
-		for(int i = 1; i <= metadata.getColumnCount(); i++){
-			System.out.print(metadata.getColumnName(i) + " | ");
-		}
-		System.out.println("");
-		System.out.println("----------------------------------------");
-		
-		while (results.next()) {
-					
+		if (results != null) {
+			ResultSetMetaData metadata = results.getMetaData();
 			for(int i = 1; i <= metadata.getColumnCount(); i++){
-				System.out.print(results.getString(i) + " | ");
+				System.out.print(metadata.getColumnName(i) + " | ");
 			}
-			System.out.println("");
+			System.out.println("\n----------------------------------------");
+			
+			while (results.next()) {
+						
+				for(int i = 1; i <= metadata.getColumnCount(); i++){
+					System.out.print(results.getString(i) + " | ");
+				}
+				System.out.println("");
+			}
+			
+			System.out.println();
 		}
-		
-		System.out.println();
 	}
 	
 }
