@@ -165,7 +165,7 @@ public class HoneyCacheCLI {
 		long endTime = System.currentTimeMillis();
 		double elapsedTimeInS = (endTime - startTime) / 1000.00;
 		DecimalFormat df = new DecimalFormat("#.##");
-        System.out.print("FILE EXECUTION TIME:" + df.format(elapsedTimeInS));
+        System.out.println("FILE EXECUTION TIME:" + df.format(elapsedTimeInS));
 		LOGGER.info("FILE: " + filename);
 		LOGGER.info("FILE EXECUTION TIME: " + df.format(elapsedTimeInS) );
 

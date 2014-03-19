@@ -103,18 +103,18 @@ public class HCacheSQLQuery {
 				colString = query.substring(indexOfWhere + 5, query.length());
 				colString = colString.trim();
 			}
-			
+			System.out.println("colString:" +colString);
 			int partIndex = colString.indexOf("dt=");
 			if (partIndex > 0){			 
 				retVal = colString.substring(partIndex, colString.indexOf(" ", partIndex)) + "|";
 			}
-			
+			System.out.println("retVal:" +retVal);
 			partIndex = colString.indexOf("hour");
 			if (partIndex > 0){
 				 
 				retVal += colString.substring(partIndex, colString.indexOf(" ", partIndex)) + "|";
 			}
-			
+			System.out.println("retVal:" +retVal);
 			partIndex = colString.indexOf("service");
 			if (partIndex > 0){
 				 
@@ -124,9 +124,9 @@ public class HCacheSQLQuery {
 			if (retVal.endsWith("|"))
 				retVal = retVal.substring(0, retVal.length()-1);
 			
-
+			
 		}
-		
+		System.out.println("retVal:" +retVal);
 		return retVal;
 
 
