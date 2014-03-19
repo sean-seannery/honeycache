@@ -71,7 +71,7 @@ public class HoneyCacheCLI {
 				line = line.trim();
 				command += line;
 				//if the command ends on this line
-				if (command.endsWith(";")){
+				if (command.endsWith(";") || command.startsWith("!")){
 					command = command.replaceAll(EOL, " ");
 					ResultSet results;
 					try {
