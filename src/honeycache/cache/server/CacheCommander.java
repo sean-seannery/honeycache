@@ -18,6 +18,7 @@ import java.text.DecimalFormat;
 import org.apache.log4j.Logger;
 
 public class CacheCommander {
+	//TODO: turn this in to a server
 	
 	public static final HCacheProperties HCACHE_PROPS = new HCacheProperties("config.properties");
 	private final static Logger LOGGER = Logger.getLogger(CacheCommander.class.getName());
@@ -73,8 +74,10 @@ public class CacheCommander {
 		//if it is a select statement we need to send it to the caching algorithm
 		if (query.isSelect()){
 			
+			
 			query.generateUniqueKey(HCACHE_PROPS.getContentPolicy());
-			String key = query.getUniqueKey();
+
+			//String key = query.getUniqueKey();
 			
 			res = policy.get(query);
 			
@@ -82,7 +85,6 @@ public class CacheCommander {
 			if (res == null){
 				boolean valid_query = true;
 				try{
-					LOGGER.info("CACHEMISS");
 					res = hiveConnection.processQuery(sqlQuery); //get the data
 				} catch (SQLException e){
 					valid_query = false;
@@ -91,6 +93,7 @@ public class CacheCommander {
 				
 				//if the query successfully executes, put it in the cache
 				if (valid_query && !HCACHE_PROPS.getContentPolicy().equals(CachePolicy.CACHE_NO_CONTENT)){
+					LOGGER.info("CACHEMISS");
 					policy.put(query, res);
 					
 					//if our cache is full, we need to delete something;
@@ -111,6 +114,12 @@ public class CacheCommander {
 			} else {
 				LOGGER.info("CACHEHIT");
 			}
+		//if the query is insert, update, or delete, we need do remove all cache entries for that table	
+		} else if (query.isInsert() || query.isUpdate() || query.isDelete()) {
+			
+
+			cacheConn.destroyCacheForTable( query.parseTable() ) ;
+		
 			
 		} else if (sqlQuery.trim().equalsIgnoreCase("!help;")){
 			//delete the cache entries

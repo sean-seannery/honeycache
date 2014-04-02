@@ -38,6 +38,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
          chef.add_recipe "otherstuff"
          chef.add_recipe "java"
          chef.add_recipe "hive"
+         chef.add_recipe "cassandra"
       end
   end
   

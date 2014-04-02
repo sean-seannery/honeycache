@@ -22,6 +22,9 @@ public class EndpointFactory {
 		if (endType.equals(Endpoint.HIVE_ENDPOINT))
 			return new HiveEndpoint(host, port, user, password);
 		
+		if (endType.equals(Endpoint.HBASE_ENDPOINT))
+			return new HbaseEndpoint(host, port, user, password);
+		
 		throw new Exception("Endpoint type doesn't exist. Check your properties.config settings");
 		 
    }

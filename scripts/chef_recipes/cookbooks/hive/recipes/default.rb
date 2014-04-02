@@ -133,7 +133,6 @@ end
 #clean up
 execute "cleanup_hadoop" do
     command "mv /home/hadoop/hadoop-1.2.1.tar.gz /home/hadoop/hadoop-1.2.1/" 
-    creates "/home/hadoop/hadoop-1.2.1/hadoop-1.2.1.tar.gz"
 end
 
 #---------------  Install Hive ------------------------------------------------
@@ -161,7 +160,6 @@ execute "ln -s /home/hadoop/hive-0.12.0/ /home/vagrant/hive" do
  #clean up
 execute "cleanup_hive" do
     command "mv /home/hadoop/hive-0.12.0.tar.gz /home/hadoop/hive-0.12.0/" 
-    creates "/home/hadoop/hive-0.12.0/hive-0.12.0.tar.gz"
 end
 
 #create hive directories in hdfs

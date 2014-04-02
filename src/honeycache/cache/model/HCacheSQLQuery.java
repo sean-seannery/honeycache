@@ -3,6 +3,8 @@ package honeycache.cache.model;
 import honeycache.cache.policy.CachePolicy;
 
 import java.security.MessageDigest;
+import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.StringTokenizer;
@@ -43,11 +45,11 @@ public class HCacheSQLQuery {
 	}
 
 	
-	public String parseTable() {
-	
+	public String parseTable() throws SQLException {
+		try{
 		if (tableName != null){
 			return tableName;
-		} else {
+		} else if (isSelect() | isDelete()){
 			parse();
 			String retVal = null;
 			
@@ -71,6 +73,23 @@ public class HCacheSQLQuery {
 			}
 			tableName = retVal.trim();
 			return tableName;
+		} else if (isUpdate()) {
+			int indexofUpdate = lowerQ.indexOf("update");
+			int indexofSet = lowerQ.indexOf("set");
+			tableName = query.substring(indexofUpdate+6, indexofSet).trim();
+			return tableName;
+			
+		}  else if (isInsert()) {
+			int indexofInto = lowerQ.indexOf("into");
+			int indexofParens = lowerQ.indexOf("(", indexofInto);
+			int indexofValues = lowerQ.indexOf("values");
+			tableName = query.substring(indexofInto+4, Math.min(indexofValues, indexofParens)).trim();
+			return tableName;
+		} else {
+			throw new SQLException("Unable to parse the table being queried because we cant determine the type");
+		}
+		} catch (IndexOutOfBoundsException e){
+			throw new SQLException("Unable to parse the table being queried because we cant determine the type", e);
 		}
 
 	}
@@ -88,50 +107,59 @@ public class HCacheSQLQuery {
 	}
 	
 	
-	public String parsePartitions() {
+	public String parsePartitions() throws SQLException {
 		parse();
-		String retVal = "";
-		String colString = null;
-		if (indexOfWhere != -1) {
-			if (indexOfGroupBy != -1) {
-				colString = query.substring(indexOfWhere + 5, indexOfGroupBy);
-				colString = colString.trim();
-			} else if (indexOfOrderBy != -1)
-			{
-				colString = query.substring(indexOfWhere + 5, indexOfOrderBy);
-				colString = colString.trim();
-			}  else if (lowerQ.indexOf("limit") != -1)	{
-				colString = query.substring(indexOfWhere + 5, lowerQ.indexOf("limit"));
-				colString = colString.trim();
-			} 
-			else {
-				colString = query.substring(indexOfWhere + 5, query.length());
-				colString = colString.trim();
-			}		
-
-			
-			if (parseTable().equals("telemetry_hourly_tbl")) {
-				for (String token : colString.split("and|or|not")){
-					
-					/*for (String b : s.split("!=|<>|>=|<=|>|<|=")){
-					System.out.println("     " + b.trim());
-					}*/
-					
-					if (token.contains("dt") || token.contains("hour") || token.contains("service")){			 
-						retVal += token.trim() + "|";
-					}
-					
-				}
-			}
-			
-		
-			if (retVal.endsWith("|"))
-				retVal = retVal.substring(0, retVal.length()-1);
-			
-			
+		try {
+			parseTable();
+		} catch (SQLException e) {
+			throw e;
 		}
-		System.out.println("retVal:" +retVal);
-		return retVal;
+		
+		try{
+			String retVal = "";
+			String colString = null;
+			if (indexOfWhere != -1) {
+				if (indexOfGroupBy != -1) {
+					colString = query.substring(indexOfWhere + 5, indexOfGroupBy);
+					colString = colString.trim();
+				} else if (indexOfOrderBy != -1)
+				{
+					colString = query.substring(indexOfWhere + 5, indexOfOrderBy);
+					colString = colString.trim();
+				}  else if (lowerQ.indexOf("limit") != -1)	{
+					colString = query.substring(indexOfWhere + 5, lowerQ.indexOf("limit"));
+					colString = colString.trim();
+				} 
+				else {
+					colString = query.substring(indexOfWhere + 5, query.length());
+					colString = colString.trim();
+				}		
+	
+				
+				if (tableName.equals("telemetry_hourly_tbl")) {
+					for (String token : colString.split("and|or|not")){
+						
+						/*for (String b : s.split("!=|<>|>=|<=|>|<|=")){
+						System.out.println("     " + b.trim());
+						}*/
+						
+						if (token.contains("dt") || token.contains("hour") || token.contains("service")){			 
+							retVal += token.trim() + "|";
+						}
+						
+					}
+				}
+				
+			
+				if (retVal.endsWith("|"))
+					retVal = retVal.substring(0, retVal.length()-1);
+				
+				
+			}
+			return retVal;
+		}  catch (IndexOutOfBoundsException e){
+			throw new SQLException("Unable to parse the partitions being queried because we cant determine the type", e);
+		}
 
 
 	}
@@ -140,6 +168,12 @@ public class HCacheSQLQuery {
 	{
 		parse();
 		return indexOfSelect > -1 && indexOfFrom > -1;
+	}
+	
+	public boolean isInsert()
+	{
+		parse();
+		return lowerQ.indexOf("insert") > -1;
 	}
 	
 	public boolean isUpdate()
@@ -164,7 +198,7 @@ public class HCacheSQLQuery {
 	}
 
 	
-	public void generateUniqueKey(String contentType) {
+	public void generateUniqueKey(String contentType) throws SQLException {
 		
 		if (contentType.equalsIgnoreCase(CachePolicy.CACHE_QUERY_CONTENT)){ 
 			//MD5of Hash
@@ -179,34 +213,48 @@ public class HCacheSQLQuery {
 
 				uniqueKey = sb.toString();
 			} catch (Exception  e) {
-				System.out.println("Error getting query key.  Problem with Hashing");
-				e.printStackTrace();
-				System.exit(1);
+
+				throw new SQLException("Error getting query key.  Problem with Hashing", e);
+
 			} 
 		}
 		if (contentType.equalsIgnoreCase(CachePolicy.CACHE_PARTITION_CONTENT)){
-			
-			uniqueKey = parseTable();
-			uniqueKey += parsePartitions();
+			try {
+				uniqueKey = parseTable();
+				uniqueKey += parsePartitions();
+			} catch (SQLException e){
+				throw e;
+			}
 
 		}
 	}
 	
-	public String replaceTable(String newTable){
+	public String replaceTable(String newTable) throws SQLException{
 		String queryCopy = query;
-		String oldTable = parseTable();
+		String oldTable;
+		try {
+			oldTable = parseTable();
+		} catch (SQLException e){
+			throw e;
+		}
+		
 		
 		queryCopy = queryCopy.replaceAll("\\b"+oldTable+"\\b", newTable);
 		
 		return queryCopy;
 	}
 	
-	public String generateTableName( String contentPolicy ){
+	public String generateTableName( String contentPolicy ) throws SQLException{
 		if (contentPolicy.equals(CachePolicy.CACHE_QUERY_CONTENT)){
 			return DATA_TABLE_PREFIX + getUniqueKey();
 		} else { 
-			String newPartitions = parsePartitions().replaceAll("\"|\'", "").replaceAll("[^\\dA-Za-z ]", "_");
-			String newTable = DATA_TABLE_PREFIX + parseTable();
+			String newPartitions, newTable;
+			try {
+				newPartitions = parsePartitions().replaceAll("\"|\'", "").replaceAll("[^\\dA-Za-z ]", "_");
+				newTable = DATA_TABLE_PREFIX + parseTable();
+			} catch (SQLException e){
+				throw e;
+			}
 			if (!newPartitions.isEmpty()){
 				newTable += "_" + newPartitions;
 			}

@@ -3,17 +3,19 @@ package honeycache.cache.endpoint;
 import honeycache.cache.model.HCacheMetadata;
 import honeycache.cache.model.HCacheSQLQuery;
 import honeycache.cache.policy.CachePolicy;
-import honeycache.cache.server.CacheCommander;
 
-import java.sql.Date;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 
 public class HiveEndpoint extends Endpoint{
 	
 	public static final String DRIVER_NAME = "org.apache.hadoop.hive.jdbc.HiveDriver"; 
-	private static final String DATA_TABLE_PREFIX = "t_";
-	private MysqlEndpoint metadataConn;
+	
 
 	//default constructor calls argument constructor
 	public HiveEndpoint(){
@@ -28,60 +30,9 @@ public class HiveEndpoint extends Endpoint{
 		password = newPassword;
 		connectionString = "jdbc:hive://" + host +":" + port + "/default";
 		driverName = DRIVER_NAME;
-		metadataConn = new MysqlEndpoint(CacheCommander.HCACHE_PROPS.getMetadataHost(), 
-										 CacheCommander.HCACHE_PROPS.getMetadataPort(), 
-										 CacheCommander.HCACHE_PROPS.getMetadataUser(), 
-										 CacheCommander.HCACHE_PROPS.getMetadataPassword());
 	}
 	
 	
-
-	public String toString() {
-		return  getConnectionString();
-	}
-
-	@Override
-	public HCacheMetadata getCacheMetadata(HCacheSQLQuery query) throws SQLException {
-		metadataConn.connect();
-		HCacheMetadata retVal = metadataConn.getCacheMetadata(query);
-		return retVal;
-	}
-
-	@Override
-	public HCacheMetadata getOldestCacheEntry() throws SQLException {
-		metadataConn.connect();
-		HCacheMetadata retVal = metadataConn.getOldestCacheEntry();
-		return retVal;
-	}
-
-	@Override
-	public HCacheMetadata getNewestCacheEntry() throws SQLException {
-		metadataConn.connect();
-		HCacheMetadata retVal = metadataConn.getNewestCacheEntry();
-		return retVal;
-	}
-
-	@Override
-	public HCacheMetadata getMostFrequentCacheEntry() throws SQLException {
-		metadataConn.connect();
-		HCacheMetadata retVal = metadataConn.getMostFrequentCacheEntry();
-		return retVal;
-	}
-
-	@Override
-	public HCacheMetadata getLeastFrequentCacheEntry() throws SQLException {
-		metadataConn.connect();
-		HCacheMetadata retVal = metadataConn.getLeastFrequentCacheEntry();
-		return retVal;
-	}
-
-	@Override
-	public HCacheMetadata getRandomCacheEntry() throws SQLException {
-		metadataConn.connect();
-		HCacheMetadata retVal = metadataConn.getRandomCacheEntry();
-		return retVal;
-	}
-
 	@Override
 	public ResultSet getCacheData(HCacheSQLQuery query, String contentPolicy) throws SQLException {
 		
@@ -117,11 +68,23 @@ public class HiveEndpoint extends Endpoint{
 		processUpdate(createAndInsertStatement);
 		
 		//get the table_size
-		int size = 9999;
-		//TODO: Get the real table size using hdfs
+		int size_in_kb = 9999;
+		try {
+			//TODO: make these resource locations not hardcoded somehow
+			Configuration conf = new Configuration();
+			conf.addResource(new Path("/home/hadoop/hadoop-1.2.1/conf/core-site.xml"));
+			conf.addResource(new Path("/home/hadoop/hadoop-1.2.1/conf/hdfs-site.xml"));
+			
+			Path inFile = new Path("/user/hive/warehouse/" + new_data_table_name);
+			long size_in_bytes = FileSystem.get(conf).getContentSummary(inFile).getLength();
+			size_in_kb = (int) (size_in_bytes / 1024);
+		} catch (IOException e){
+			throw new SQLException("Error getting table size from hdfs command", e);
+		}
+
 		
 		
-		HCacheMetadata meta = new HCacheMetadata(query.getUniqueKey(), new_data_table_name, new java.sql.Date( new java.util.Date().getTime() ), 1, size
+		HCacheMetadata meta = new HCacheMetadata(query.getUniqueKey(), new_data_table_name, new java.sql.Date( new java.util.Date().getTime() ), 1, size_in_kb
 												, query.parseTable(), query.parsePartitions());
 		updateMetadata(meta);
 		
@@ -130,40 +93,10 @@ public class HiveEndpoint extends Endpoint{
 
 	@Override
 	public void deleteCacheData(HCacheMetadata key) throws SQLException {
-		metadataConn.connect();
-		metadataConn.processUpdate("DELETE FROM hcache_key_data WHERE key_id = \""+ key.getKey() + "\"");
+
+		deleteMetadataTableEntry(key);
 				
 		processUpdate("DROP TABLE "+ key.getCacheTableName());
-	}
-
-	@Override
-	public void updateMetadata(HCacheMetadata meta) throws SQLException {
-		metadataConn.connect();
-		metadataConn.updateMetadata(meta);
-	}
-
-	@Override
-	public int getTotalCacheSize() throws SQLException {
-		metadataConn.connect();
-		return metadataConn.getTotalCacheSize();
-	}
-
-	@Override
-	public int getTotalCacheEntryCount() throws SQLException {
-		metadataConn.connect();
-		return metadataConn.getTotalCacheEntryCount();
-	}
-
-
-
-	public void destroyTheCache() throws SQLException{
-		metadataConn.connect();
-		ResultSet cachedTables = metadataConn.processQuery("SELECT key_id, table_name FROM hcache_key_data");
-		while (cachedTables.next()){
-			 
-			deleteCacheData( new HCacheMetadata(cachedTables.getString(1), cachedTables.getString(2),null,0, 0,null, null) );
-			
-		}
 	}
 
 
